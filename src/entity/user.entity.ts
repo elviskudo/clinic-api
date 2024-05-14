@@ -41,6 +41,12 @@ export class User {
   @Column()
   role_id: number;
 
+  @Column({ default: false })
+  isVerified: boolean;
+
+  @Column({ nullable: true })
+  verificationCode: string;
+
   @OneToOne((type) => Profile, (profile) => profile.user_id)
   profile: Profile[];
 

@@ -1,14 +1,12 @@
 import {
+  IsString,
   IsEmail,
   IsPhoneNumber,
   IsStrongPassword,
-  IsString,
-  MaxLength,
 } from 'class-validator';
 
-export class UserDto {
+export class UpdateUserDto {
   @IsString()
-  @MaxLength(64)
   username: string;
 
   @IsEmail()
