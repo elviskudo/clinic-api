@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength, IsPhoneNumber,IsMimeType } from 'class-validator';
+import { IsOptional, IsString, MaxLength, IsPhoneNumber, IsNotEmpty, IsDate, IsInt } from 'class-validator';
 
 export class ProfileDto {
   @IsOptional()
@@ -8,53 +8,60 @@ export class ProfileDto {
   @IsOptional()
   @IsPhoneNumber('ID')
   phone_number: string;
-  
-  no_identity: number;
 
+  @IsInt()
+  @IsNotEmpty({ message: 'no_identity should not be empty' })
+  no_identity: string;
+
+  @IsDate()
+  @IsNotEmpty({ message: 'birth_date should not be empty' })
   birth_date: Date;
 
-  birth_place: number;
+  @IsInt()
+  @IsNotEmpty({ message: 'birth_place should not be empty' })
+  birth_place: string;
 
+  @IsString()
+  @IsNotEmpty({ message: 'address should not be empty' })
   address: string;
 
+  @IsString()
+  @IsNotEmpty({ message: 'gender should not be empty' })
   gender: string;
 
   @IsOptional()
+  @IsString()
   work_in: string;
 
   @IsOptional()
+  @IsString()
   blood_type: string;
 
   @IsOptional()
+  @IsString()
   marital_status: string;
 
   @IsOptional()
+  @IsString()
   nationality: string;
 
   @IsOptional()
+  @IsString()
   religion: string;
 
   @IsOptional()
-  country_id: number;
-
-  @IsOptional()
-  region_id: number;
-
-  @IsOptional()
+  @IsInt()
   city_id: number;
 
   @IsOptional()
-  district_id: number;
-
-  @IsOptional()
-  village_id: number;
-
-  @IsOptional()
+  @IsInt()
   neighborhood_no: number;
 
   @IsOptional()
+  @IsInt()
   citizen_no: number;
 
   @IsOptional()
+  @IsInt()
   area_code: number;
 }

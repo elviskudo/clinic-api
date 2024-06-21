@@ -1,13 +1,15 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Village } from 'src/entity/village.entity';
-import { Cities } from 'src/entity/location/cities';
-import { citiesController } from 'src/controller/location/location.controller';
-import { CitiesService } from 'src/service/location/location.service';
+import { WilayahService } from 'src/service/location/location.service';
+import { WilayahController } from 'src/controller/location/location.controller';
+import { Wilayah } from 'src/entity/location/wilayah.entity';
+import { User } from 'src/entity/profile/user.entity';
+import { Role } from 'src/entity/role.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cities])],
-  controllers: [citiesController],
-  providers: [CitiesService],
+  imports: [TypeOrmModule.forFeature([Wilayah, User, Role])],
+  providers: [WilayahService],
+  controllers: [WilayahController],
+  exports: [WilayahService],
 })
 export class LocationModule {}

@@ -10,7 +10,7 @@ import { mailService } from '../mailer/mailer.service';
 import * as moment from 'moment-timezone';
 import { Profile } from '../../entity/profile/profile.entity';
 import { promises } from 'dns';
-import { UserService } from '../user.service';
+import { randomBytes } from 'crypto';
 
 export function generateRandomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -18,6 +18,16 @@ export function generateRandomNumber(min: number, max: number): number {
 
 @Injectable()
 export class AuthService {
+  private blacklist: Set<string> = new Set();
+
+  addToBlacklist(token: string) {
+    this.blacklist.add(token);
+  }
+
+  isInBlacklist(token: string): boolean {
+    return this.blacklist.has(token);
+  }
+  
   constructor(
     @InjectRepository(User)
     private readonly authRepository: Repository<User>,
@@ -31,7 +41,7 @@ export class AuthService {
   async resendotp(
     token: string,
     otp: number,
-  ): Promise<{ status: boolean; message: string; users: any }> {
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
@@ -50,8 +60,9 @@ export class AuthService {
             image: null,
             email: CheckUser.email,
             phone_number: CheckUser.phone_number,
-            token: null,
+            verifikasi: null,
           },
+          token: null,
         };
       }
 
@@ -68,8 +79,9 @@ export class AuthService {
             image: get_profile.profil_image,
             email: CheckUser.email,
             phone_number: CheckUser.phone_number,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -82,15 +94,16 @@ export class AuthService {
       const saveotp = await this.saveOtp(otp, CheckUser.id, 0);
 
       return {
-        status: false,
+        status: true,
         message: 'Berhasil mengirim ulang Kode OTP',
         users: {
           full_name: get_profile.fullname,
           image: get_profile.profil_image,
           email: CheckUser.email,
           phone_number: CheckUser.phone_number,
-          token: null,
+          verifikasi: CheckUser.verifed === 1,
         },
+        token: null,
       };
     } else {
       return {
@@ -101,8 +114,9 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: null,
         },
+        token: null,
       };
     }
   }
@@ -110,7 +124,7 @@ export class AuthService {
   async verifikasi(
     kode_otp: number,
     token: string,
-  ): Promise<{ status: boolean; message: string; users: any }> {
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
@@ -124,12 +138,14 @@ export class AuthService {
           status: false,
           message: 'Email tidak valid',
           users: {
+            id: null,
             full_name: null,
             image: null,
             email: CheckUser.email,
             phone_number: CheckUser.phone_number,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -142,12 +158,14 @@ export class AuthService {
           status: false,
           message: 'Akun telah di verifikasi',
           users: {
+            id: CheckUser.id,
             full_name: profile.fullname,
             image: profile.profil_image,
             email: CheckUser.email,
             phone_number: CheckUser.phone_number,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -159,12 +177,14 @@ export class AuthService {
           status: false,
           message: 'OTP Salah',
           users: {
+            id: CheckUser.id,
             full_name: profile.fullname,
             image: profile.profil_image,
             email: CheckUser.email,
             phone_number: CheckUser.phone_number,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -177,7 +197,7 @@ export class AuthService {
         { userId: CheckUser.id, verifikasi: true },
         process.env.JWT_SECRET,
         {
-          expiresIn: '1h',
+          expiresIn: '7d',
         },
       );
 
@@ -185,24 +205,28 @@ export class AuthService {
         status: true,
         message: 'Akun telah berhasil di verifikasi',
         users: {
+          id: CheckUser.id,
           full_name: profile.fullname,
           image: profile.profil_image,
           email: CheckUser.email,
           phone_number: CheckUser.phone_number,
-          token: token,
+          verifikasi: CheckUser.verifed === 1,
         },
+        token: token,
       };
     } else {
       return {
         status: false,
         message: 'Invalid payload',
         users: {
+          id: null,
           full_name: null,
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: null,
         },
+        token: null,
       };
     }
   }
@@ -238,6 +262,7 @@ export class AuthService {
     status: boolean;
     message: string;
     users: any;
+    token: string;
   }> {
     const emailExists = await this.authRepository.findOne({ where: { email } });
     if (emailExists) {
@@ -250,8 +275,9 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: emailExists.verifed === 1,
         },
+        token: null,
       };
     }
 
@@ -268,8 +294,9 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: phoneNumberExists.verifed === 1,
         },
+        token: null,
       };
     }
 
@@ -288,7 +315,7 @@ export class AuthService {
       fullname: fullnames,
       phone_number: phone_number,
       profil_image:
-        'https://api.dicebear.com/8.x/adventurer/svg?seed=' + fullnames,
+        'https://api.dicebear.com/8.x/notionists/svg?seed=' + fullnames,
       no_identity: null,
       birth_date: null,
       birth_place: null,
@@ -300,11 +327,7 @@ export class AuthService {
       nationality: null,
       religion: null,
       user_id: save.id,
-      country_id: null,
-      region_id: null,
       city_id: null,
-      district_id: null,
-      village_id: null,
       neighborhood_no: null,
       citizen_no: null,
       area_code: null,
@@ -316,7 +339,7 @@ export class AuthService {
       { userId: user.id, verifikasi: false },
       process.env.JWT_SECRET,
       {
-        expiresIn: '1h',
+        expiresIn: '7d',
       },
     );
     return {
@@ -328,8 +351,9 @@ export class AuthService {
         image: saveprofile.profil_image,
         email: save.email,
         phone_number: save.phone_number,
-        token: token,
+        verifikasi: save.verifed === 1,
       },
+      token: token,
     };
   }
 
@@ -340,6 +364,7 @@ export class AuthService {
     status: boolean;
     message: string;
     users: any;
+    token: string;
   }> {
     const user = await this.authRepository.findOne({ where: { email } });
 
@@ -354,14 +379,10 @@ export class AuthService {
           email: null,
           phone_number: null,
           verifikasi: false,
-          token: null,
         },
+        token: null,
       };
     }
-
-    const profile = await this.profileRepository.findOne({
-      where: { user_id: user.id },
-    });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -376,15 +397,20 @@ export class AuthService {
           email: null,
           phone_number: null,
           verifikasi: false,
-          token: null,
         },
+        token: null,
       };
     }
+
+    const profile = await this.profileRepository.findOne({
+      where: { user_id: user.id },
+    });
+
     if (user.verifed == 0) {
       const token_verifikasi = jwt.sign(
         { userId: user.id, verifikasi: false },
         process.env.JWT_SECRET,
-        { expiresIn: '1h' },
+        { expiresIn: '7d' },
       );
 
       return {
@@ -397,8 +423,8 @@ export class AuthService {
           email: user.email,
           phone_number: user.phone_number,
           verifikasi: false,
-          token: token_verifikasi,
         },
+        token: token_verifikasi,
       };
     }
 
@@ -406,7 +432,7 @@ export class AuthService {
       { userId: user.id, verifikasi: true },
       process.env.JWT_SECRET,
       {
-        expiresIn: '1h',
+        expiresIn: '7d',
       },
     );
     return {
@@ -419,15 +445,15 @@ export class AuthService {
         email: user.email,
         phone_number: user.phone_number,
         verifikasi: true,
-        token: token,
       },
+      token: token,
     };
   }
 
   async update_profile(
     token: string,
     updateProfile: Partial<Profile>,
-  ): Promise<{ status: boolean; message: string; users: any }> {
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
     if (
@@ -448,8 +474,9 @@ export class AuthService {
             image: null,
             email: null,
             phone_number: null,
-            token: null,
+            verifikasi: userVerifikasi,
           },
+          token: null,
         };
       }
 
@@ -466,8 +493,9 @@ export class AuthService {
             image: null,
             email: null,
             phone_number: null,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -488,8 +516,9 @@ export class AuthService {
           image: checkprofile.profil_image,
           email: CheckUser.email,
           phone_number: CheckUser.phone_number,
-          token: null,
+          verifikasi: CheckUser.verifed === 1,
         },
+        token: null,
       };
     } else {
       return {
@@ -501,8 +530,9 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: null,
         },
+        token: null,
       };
     }
   }
@@ -510,7 +540,7 @@ export class AuthService {
   async update_avatar(
     token: string,
     image: string,
-  ): Promise<{ status: boolean; message: string; users: any }> {
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
     if (
@@ -531,8 +561,9 @@ export class AuthService {
             image: null,
             email: null,
             phone_number: null,
-            token: null,
+            verifikasi: userVerifikasi,
           },
+          token: null,
         };
       }
 
@@ -549,8 +580,9 @@ export class AuthService {
             image: null,
             email: null,
             phone_number: null,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -571,8 +603,9 @@ export class AuthService {
           image: checkprofile.profil_image,
           email: CheckUser.email,
           phone_number: CheckUser.phone_number,
-          token: null,
+          verifikasi: CheckUser.verifed === 1,
         },
+        token: null,
       };
     } else {
       return {
@@ -584,86 +617,207 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: null,
         },
+        token: null,
       };
     }
   }
 
   async profile(
     token: string,
-  ): Promise<{ status: boolean; message: string; users: any }> {
-    const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
+    try {
+      const extracttoken: any = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (
-      typeof extracttoken !== 'string' &&
-      'userId' in extracttoken &&
-      'verifikasi' in extracttoken
-    ) {
-      const userId = extracttoken.userId;
-      const userVerifikasi = extracttoken.verifikasi;
+      if (
+        extracttoken &&
+        extracttoken.userId &&
+        extracttoken.verifikasi !== undefined
+      ) {
+        const userId = extracttoken.userId;
+        const userVerifikasi = extracttoken.verifikasi;
 
-      if (userVerifikasi == false) {
-        return {
-          status: false,
-          message: 'Silakan verifikasi akun anda',
-          users: {
-            id: null,
-            full_name: null,
-            image: null,
-            email: null,
-            phone_number: null,
+        if (userVerifikasi === false) {
+          return {
+            status: false,
+            message: 'Silakan verifikasi akun anda',
+            users: {
+              id: null,
+              full_name: null,
+              image: null,
+              email: null,
+              phone_number: null,
+              verifikasi: userVerifikasi,
+            },
             token: null,
-          },
-        };
-      }
+          };
+        }
 
-      const CheckUser = await this.authRepository.findOne({
-        where: { id: userId },
-      });
-      if (!CheckUser) {
-        return {
-          status: false,
-          message: 'User tidak di temukan',
-          users: {
-            id: null,
-            full_name: null,
-            image: null,
-            email: null,
-            phone_number: null,
+        const CheckUser = await this.authRepository.findOne({
+          where: { id: userId },
+        });
+
+        if (!CheckUser) {
+          return {
+            status: false,
+            message: 'User tidak ditemukan',
+            users: {
+              id: null,
+              full_name: null,
+              image: null,
+              email: null,
+              phone_number: null,
+              verifikasi: null,
+            },
             token: null,
+          };
+        }
+
+        const checkprofile = await this.profileRepository.findOne({
+          where: { user_id: CheckUser.id },
+        });
+
+        if (!checkprofile) {
+          return {
+            status: false,
+            message: 'Profile tidak ditemukan',
+            users: {
+              id: null,
+              full_name: null,
+              image: null,
+              email: null,
+              phone_number: null,
+              verifikasi: userVerifikasi,
+            },
+            token: null,
+          };
+        }
+
+        return {
+          status: true,
+          message: 'Data profiles berhasil diambil',
+          users: {
+            id: CheckUser.id,
+            full_name: checkprofile.fullname,
+            image: checkprofile.profil_image,
+            email: CheckUser.email,
+            phone_number: CheckUser.phone_number,
+            verifikasi: userVerifikasi,
           },
-        };
-      }
-
-      const checkprofile = await this.profileRepository.findOne({
-        where: { user_id: CheckUser.id },
-      });
-
-      return {
-        status: true,
-        message: 'Data profiles berhasil di ambil',
-        users: {
-          id: CheckUser.id,
-          full_name: checkprofile.fullname,
-          image: checkprofile.profil_image,
-          email: CheckUser.email,
-          phone_number: CheckUser.phone_number,
           token: null,
-        },
-      };
-    } else {
+        };
+      } else {
+        return {
+          status: false,
+          message: 'Payload tidak valid',
+          users: {
+            id: null,
+            full_name: null,
+            image: null,
+            email: null,
+            phone_number: null,
+            verifikasi: null,
+          },
+          token: null,
+        };
+      }
+    } catch (error) {
       return {
         status: false,
-        message: 'Invalid Payload',
+        message: 'Server error',
         users: {
           id: null,
           full_name: null,
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: null,
         },
+        token: null,
+      };
+    }
+  }
+
+  async personal_data(
+    token: string,
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
+    try {
+      const extracttoken: any = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (
+        extracttoken &&
+        extracttoken.userId &&
+        extracttoken.verifikasi !== undefined
+      ) {
+        const userId = extracttoken.userId;
+        const userVerifikasi = extracttoken.verifikasi;
+
+        if (userVerifikasi === false) {
+          return {
+            status: false,
+            message: 'Silakan verifikasi akun anda',
+            users: {
+              id: null,
+              full_name: null,
+              image: null,
+              email: null,
+              phone_number: null,
+              verifikasi: userVerifikasi,
+            },
+            token: null,
+          };
+        }
+
+        const CheckUser = await this.authRepository.findOne({
+          where: { id: userId },
+        });
+
+        if (!CheckUser) {
+          return {
+            status: false,
+            message: 'User tidak ditemukan',
+            users: null,
+            token: null,
+          };
+        }
+
+        const checkprofile = await this.profileRepository.findOne({
+          where: { user_id: CheckUser.id },
+        });
+
+        if (!checkprofile) {
+          return {
+            status: false,
+            message: 'Profile tidak ditemukan',
+            users: null,
+            token: null,
+          };
+        }
+
+        return {
+          status: true,
+          message: 'Data profiles berhasil diambil',
+          users: {
+            checkprofile,
+            verifikasi: CheckUser.verifed === 1
+          },
+          token: null,
+        };
+      } else {
+        return {
+          status: false,
+          message: 'Payload tidak valid',
+          users: null,
+          token: null,
+        };
+      }
+    } catch (error) {
+      return {
+        status: false,
+        message: 'Server error',
+        users: null,
+        token: null,
       };
     }
   }
@@ -671,7 +825,7 @@ export class AuthService {
   async change_pass(
     token: string,
     password: string,
-  ): Promise<{ status: boolean; message: string; users: any }> {
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
     if (
@@ -692,8 +846,9 @@ export class AuthService {
             image: null,
             email: null,
             phone_number: null,
-            token: null,
+            verifikasi: userVerifikasi,
           },
+          token: null,
         };
       }
 
@@ -710,8 +865,9 @@ export class AuthService {
             image: null,
             email: null,
             phone_number: null,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -734,8 +890,9 @@ export class AuthService {
             image: checkprofile.profil_image,
             email: CheckUser.email,
             phone_number: CheckUser.phone_number,
-            token: null,
+            verifikasi: CheckUser.verifed === 1,
           },
+          token: null,
         };
       }
 
@@ -752,8 +909,9 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: CheckUser.verifed === 1,
         },
+        token: null,
       };
     } else {
       return {
@@ -765,14 +923,201 @@ export class AuthService {
           image: null,
           email: null,
           phone_number: null,
-          token: null,
+          verifikasi: null,
         },
+        token: null,
       };
     }
   }
 
-  async validateUser(payload: any): Promise<User | null> {
-    const user: User | null = await UserService.findById(payload.userId);
-    return user;
+  async google_auth(
+    user: any,
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
+    if (!user) {
+      return {
+        status: false,
+        message: 'User tidak ditemukan',
+        users: {
+          id: null,
+          full_name: null,
+          image: null,
+          email: null,
+          phone_number: null,
+          verifikasi: null,
+        },
+        token: null,
+      };
+    }
+
+    const userExists = await this.authRepository.findOne({
+      where: { email: user.email },
+    });
+
+    if (!userExists) {
+      const password_random = randomBytes(12);
+      const hashedPassword = await bcrypt.hash(password_random, 10);
+      const createuser = this.authRepository.create({
+        email: user.email,
+        phone_number: user.phoneNumber,
+        password: hashedPassword,
+        role_id: 1,
+        verifed: 1,
+      });
+
+      const save = await this.authRepository.save(createuser);
+
+      const profile = this.profileRepository.create({
+        fullname: user.name,
+        phone_number: user.phoneNumber,
+        profil_image: user.picture,
+        no_identity: null,
+        birth_date: null,
+        birth_place: null,
+        address: null,
+        gender: null,
+        work_in: null,
+        blood_type: null,
+        marital_status: null,
+        nationality: null,
+        religion: null,
+        user_id: save.id,
+        city_id: null,
+        neighborhood_no: null,
+        citizen_no: null,
+        area_code: null,
+      });
+
+      const saveprofile = await this.profileRepository.save(profile);
+
+      const token = jwt.sign(
+        { userId: user.id, verifikasi: true },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: '7d',
+        },
+      );
+      return {
+        status: true,
+        message: 'Berhasil Login account',
+        users: {
+          id: save.id,
+          full_name: saveprofile.fullname,
+          image: saveprofile.profil_image,
+          email: save.email,
+          phone_number: save.phone_number,
+          verifikasi: save.verifed === 1,
+        },
+        token: token,
+      };
+    }
+
+    const profile = await this.profileRepository.findOne({
+      where: { user_id: user.id },
+    });
+
+    if (user.verifed == 0) {
+      const token_verifikasi = jwt.sign(
+        { userId: user.id, verifikasi: false },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' },
+      );
+
+      return {
+        status: true,
+        message: 'Silakan verifikasi akun anda',
+        users: {
+          id: user.id,
+          full_name: profile.fullname,
+          image: profile.profil_image,
+          email: user.email,
+          phone_number: user.phone_number,
+          verifikasi: user.verifed === 1,
+        },
+        token: token_verifikasi,
+      };
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, verifikasi: true },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '7d',
+      },
+    );
+
+    return {
+      status: true,
+      message: 'Berhasil login Account',
+      users: {
+        id: user.id,
+        full_name: profile.fullname,
+        image: profile.profil_image,
+        email: user.email,
+        phone_number: user.phone_number,
+        verifikasi: user.verifed === 1,
+      },
+      token: token,
+    };
+  }
+
+  async logout(
+    token: string,
+  ): Promise<{ status: boolean; message: string; users: any; token: string }> {
+    const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (
+      typeof extracttoken !== 'string' &&
+      'userId' in extracttoken &&
+      'verifikasi' in extracttoken
+    ) {
+      const userId = extracttoken.userId;
+
+      const CheckUser = await this.authRepository.findOne({
+        where: { id: userId },
+      });
+      if (!CheckUser) {
+        return {
+          status: false,
+          message: 'Token tidak di temukan',
+          users: {
+            id: null,
+            full_name: null,
+            image: null,
+            email: null,
+            phone_number: null,
+            verifikasi: CheckUser.verifed === 1,
+          },
+          token: null,
+        };
+      }
+
+      return {
+        status: true,
+        message: 'Berhasil logout',
+        users: {
+          id: null,
+          full_name: null,
+          image: null,
+          email: null,
+          phone_number: null,
+          verifikasi: CheckUser.verifed === 1,
+        },
+        token: null,
+      };
+    } else {
+      return {
+        status: false,
+        message: 'Invalid Payload',
+        users: {
+          id: null,
+          full_name: null,
+          image: null,
+          email: null,
+          phone_number: null,
+          verifikasi: null,
+        },
+        token: null,
+      };
+    }
   }
 }

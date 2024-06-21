@@ -1,14 +1,13 @@
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { Bank } from './entity/bank.entity';
+import { Bank } from './entity/bank/bank.entity';
 import { Category } from './entity/category.entity';
-import { Clinic } from './entity/clinic.entity';
-import { Doctor } from './entity/doctor.entity';
+import { Clinic } from './entity/clinic/clinic.entity';
+import { Doctor } from './entity/clinic/doctor.entity';
 import { Document } from './entity/document.entity';
-import { Drug } from './entity/drug.entity';
+import { Drug } from './entity/drug/drug.entity';
 import { LastRedeem } from './entity/latest/last.redeem.entity';
 import { MedicalRecordDrug } from './entity/medical_record_drug.entity';
 import { Menu } from './entity/menu.entity';
-import { Payment } from './entity/payment.entity';
 import { Profile } from './entity/profile/profile.entity';
 import { Record } from './entity/latest/record.entity';
 import { Reply } from './entity/reply.entity';
@@ -21,20 +20,28 @@ import { User } from './entity/profile/user.entity';
 import { Otp } from './entity/otp.entity';
 import { Village } from './entity/village.entity';
 import { ProfileConfiguration } from './entity/profile_config/profile.config.entity';
-import { Cities } from './entity/location/cities';
+import { Wilayah } from './entity/location/wilayah.entity';
+import { ScheduleEntity } from './entity/appointment/schedules.entity';
+import { Poly } from './entity/clinic/poly.entity';
+import { Symptom } from './entity/symptom.entity';
+import { Summary } from './entity/summary/summary.entity';
+import { Payment } from './entity/payment/payment.entity';
+import { Feedback } from './entity/feedback.entity';
+import { Term } from './entity/term/term.entity';
+import { TermCategory } from './entity/term/term.category.entity';
+import { DiagnosisEntity } from './entity/diagnosis.entity';
 
 export const DATABASE_ENTITIES = [
   Bank,
   Category,
   Clinic,
-  Cities,
   Doctor,
   Document,
   Drug,
   LastRedeem,
   MedicalRecordDrug,
   Menu,
-  Payment,
+  Poly,
   Profile,
   ProfileConfiguration,
   Record,
@@ -43,9 +50,18 @@ export const DATABASE_ENTITIES = [
   Role,
   Room,
   Schedule,
+  Summary,
+  Symptom,
+  Term,
+  TermCategory,
   Transaction,
+  Wilayah,
   User,
   Otp,
+  ScheduleEntity,
+  Payment,
+  Feedback,
+  DiagnosisEntity
 ];
 
 export const format_json = (

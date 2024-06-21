@@ -1,66 +1,69 @@
-import { Controller, Body, Post, Param, Get } from '@nestjs/common';
+import { Controller, Patch, Body, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { format_json } from 'src/env';
 import { ProfileConfigurationService } from 'src/service/profile_config/profile.config.service';
-import { ProfileConfiguration } from 'src/entity/profile_config/profile.config.entity';
 
-@Controller('api/profile-config')
-export class ProfileConfigurationController {
+@Controller('api/settings')
+@UseGuards(AuthGuard('jwt'))
+export class SettingsController {
   constructor(
     private readonly profileConfigService: ProfileConfigurationService,
   ) {}
 
-  @Post(':userId')
-  async createOrUpdateProfileConfig(
-    @Param('userId') userId: number,
-    @Body() config: Partial<ProfileConfiguration>,
+  @Patch('location')
+  async updateLocationSetting(
+    @Body('isLocation') isLocation: boolean,
+    @Req() req,
   ) {
-    try {
-      const profileConfig =
-        await this.profileConfigService.createOrUpdateProfileConfig(
-          userId,
-          config,
-        );
-      return {
-        status: 200,
-        success: true,
-        errors: null,
-        meta: null,
-        message: 'Profile configuration successfully created or updated',
-        data: profileConfig,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        success: false,
-        errors: error.message,
-        meta: null,
-        message: 'Failed to create or update profile configuration',
-        data: null,
-      };
-    }
+    const userId = req.user.id;
+    const updatedConfig = await this.profileConfigService.update(userId, {
+      isLocation,
+    });
+    return format_json(
+      200,
+      true,
+      null,
+      null,
+      'Location setting updated successfully',
+      updatedConfig,
+    );
   }
 
-  @Get(':userId')
-  async getProfileConfigByUserId(@Param('userId') userId: number) {
-    try {
-      const profileConfig =
-        await this.profileConfigService.getProfileConfigByUserId(userId);
-      return {
-        status: 200,
-        success: true,
-        errors: null,
-        meta: null,
-        message: 'Profile configuration successfully retrieved',
-        data: profileConfig,
-      };
-    } catch (error) {
-      return {
-        status: 500,
-        success: false,
-        errors: error.message,
-        meta: null,
-        message: 'Failed to retrieve profile configuration',
-        data: null,
-      };
-    }
+  @Patch('push-notification')
+  async updatePushNotificationSetting(
+    @Body('isPushNotification') isPushNotification: boolean,
+    @Req() req,
+  ) {
+    const userId = req.user.id;
+    const updatedConfig = await this.profileConfigService.update(userId, {
+      isPushNotification,
+    });
+    return format_json(
+      200,
+      true,
+      null,
+      null,
+      'Push notification setting updated successfully',
+      updatedConfig,
+    );
+  }
+
+  @Patch('email-notification')
+  async updateEmailNotificationSetting(
+    @Body('isEmailNotification') isEmailNotification: boolean,
+    @Req() req,
+  ) {
+    const userId = req.user.id;
+    const updatedConfig = await this.profileConfigService.update(userId, {
+      isEmailNotification,
+    });
+    return format_json(
+      200,
+      true,
+      null,
+      null,
+      'Email notification setting updated successfully',
+      updatedConfig,
+    );
   }
 }

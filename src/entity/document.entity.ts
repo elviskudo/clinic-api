@@ -1,4 +1,4 @@
-import { Doctor } from 'src/entity/doctor.entity';
+import { Doctor } from 'src/entity/clinic/doctor.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 
 @Entity()

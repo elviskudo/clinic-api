@@ -1,11 +1,4 @@
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  ManyToOne,
-  IsNull,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, Index } from 'typeorm';
 import { User } from 'src/entity/profile/user.entity';
 
 @Entity()
@@ -23,13 +16,13 @@ export class Profile {
   profil_image: string;
 
   @Column({ nullable: true })
-  no_identity: number;
+  no_identity: string;
 
   @Column({ nullable: true })
   birth_date: Date;
 
   @Column({ nullable: true })
-  birth_place: number;
+  birth_place: string;
 
   @Column({ nullable: true })
   address: string;
@@ -53,22 +46,11 @@ export class Profile {
   religion: string;
 
   @Column()
+  @Index({ unique: true })
   user_id: number;
 
   @Column({ nullable: true })
-  country_id: number;
-
-  @Column({ nullable: true })
-  region_id: number;
-
-  @Column({ nullable: true })
   city_id: number;
-
-  @Column({ nullable: true })
-  district_id: number;
-
-  @Column({ nullable: true })
-  village_id: number;
 
   @Column({ nullable: true })
   neighborhood_no: number;
@@ -78,4 +60,7 @@ export class Profile {
 
   @Column({ nullable: true })
   area_code: number;
+
+  @OneToOne(() => User, user => user.id, { onDelete: 'CASCADE' })
+  user: User[];
 }

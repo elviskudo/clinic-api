@@ -1,18 +1,16 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DATABASE_ENTITIES } from './env';
-import { BankModule } from './modules/bank.module';
+import { BankModule } from './modules/bank/bank.module';
 import { CategoryModule } from './modules/category.module';
-import { ClinicModule } from './modules/clinic.module';
-import { DoctorModule } from './modules/doctor.module';
+import { DoctorModule } from './modules/clinic/doctor.module';
 import { DocumentModule } from './modules/document.module';
-import { DrugModule } from './modules/drug.module';
+import { DrugModule } from './modules/drug/drug.module';
 import { LastMedicalRecordModule } from './modules/latest/last.medical.record.module';
 import { LastRedeemModule } from './modules/latest/last.redeem.module';
 import { LocationModule } from './modules/location/location.module';
 import { MedicalRecordDrugModule } from './modules/medical_record_drug.module';
 import { MenuModule } from './modules/menu.module';
-import { PaymentModule } from './modules/payment.module';
 import { ProfileModule } from './modules/profile.module';
 import { RecordModule } from './modules/record.module';
 import { ReplyModule } from './modules/reply.module';
@@ -31,11 +29,31 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { join } from 'path';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ProfileConfigurationModule } from './modules/profile_config/profile.config.module';
-import { UserProfileModule } from './modules/profile_config/user.profile.config.module';
+import { ClinicModule } from './modules/clinic/clinic.module';
+import { PolyModule } from './modules/clinic/poly.module';
+import { SymptomModule } from './modules/symptom.module';
+import { SummaryModule } from './modules/summary/summary.module';
+import { RedeemModule } from './modules/redeem/redeem.module';
+import { MedicalRecordModule } from './modules/medical record/medical.record.module';
+import { TokenBlacklistMiddleware } from './middleware/token-blacklist.middleware';
+import { AuthService } from './service/auth/auth.service';
+import { AuthController } from './controller/auth/auth.controller';
+import { User } from './entity/profile/user.entity';
+import { Otp } from './entity/otp.entity';
+import { Profile } from './entity/profile/profile.entity';
+import { mailService } from 'src/service/mailer/mailer.service';
+import { JwtStrategy } from 'src/middleware/jwt.strategy';
+import { paymentModule } from './modules/payment/payment.module';
+import { FeedbackModule } from './modules/feedback.module';
+import { TermModule } from './modules/term/term.module';
+import { TermCategoryModule } from './modules/term/term.category.module';
+import { DiagnosisModule } from './modules/diagnosis.module';
 
 @Module({
+  controllers: [AuthController],
+  providers: [AuthService, mailService, JwtStrategy],
   imports: [
+    TypeOrmModule.forFeature([User, Otp, Profile]),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -87,9 +105,9 @@ import { UserProfileModule } from './modules/profile_config/user.profile.config.
     LastMedicalRecordModule,
     LastRedeemModule,
     MedicalRecordDrugModule,
+    MedicalRecordModule,
     MenuModule,
-    PaymentModule,
-    ProfileConfigurationModule,
+    PolyModule,
     ProfileModule,
     RecordModule,
     ReplyModule,
@@ -97,11 +115,22 @@ import { UserProfileModule } from './modules/profile_config/user.profile.config.
     RoleModule,
     RoomModule,
     ScheduleModule,
+    SummaryModule,
+    TermModule,
+    TermCategoryModule,
     TransactionModule,
     LocationModule,
     UserModule,
-    UserProfileModule,
+    SymptomModule,
     Authmodule,
+    RedeemModule,
+    paymentModule,
+    FeedbackModule,
+    DiagnosisModule
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(TokenBlacklistMiddleware).forRoutes('*');
+  }
+}

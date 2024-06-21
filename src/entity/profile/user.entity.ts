@@ -1,21 +1,16 @@
-import internal from 'stream';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  OneToOne,
-  OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, OneToMany, CreateDateColumn, UpdateDateColumn, Unique } from 'typeorm';
 import { Profile } from 'src/entity/profile/profile.entity';
 import { Schedule } from 'src/entity/schedule.entity';
 import { Record } from 'src/entity/latest/record.entity';
 import { Review } from 'src/entity/review.entity';
 import { Reply } from 'src/entity/reply.entity';
 import { ProfileConfiguration } from '../profile_config/profile.config.entity';
+import { AppointMentEntity } from '../appointment/appointment.entity';
+import { ScheduleEntity } from '../appointment/schedules.entity';
+
 
 @Entity()
+@Unique(['phone_number', 'email'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -29,9 +24,6 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
-  roles: string;
-
   @Column({ default: 1 })
   role_id: number;
 
@@ -44,21 +36,21 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
 
-  @OneToOne((type) => Profile, (profile) => profile.user_id)
-  profile: Profile[];
-
-  @OneToMany((type) => Schedule, (schedule) => schedule.user_id)
-  schedule: Schedule[];
-
-  @OneToMany((type) => Record, (record) => record.user_id)
+  @OneToMany(() => Record, record => record.user_id)
   record: Record[];
 
-  @OneToMany((type) => Review, (review) => review.user_id)
+  @OneToMany(() => Review, review => review.user_id)
   review: Review[];
 
-  @OneToMany((type) => Reply, (reply) => reply.user_id)
+  @OneToMany(() => Reply, reply => reply.user_id)
   reply: Reply[];
 
-  @OneToMany(() => ProfileConfiguration, (config) => config.user)
+  @OneToMany(() => ProfileConfiguration, config => config.user, { onDelete: 'CASCADE' })
   profileConfigurations: ProfileConfiguration[];
+
+  @OneToOne(() => Profile, Profile => Profile.user_id, { onDelete: 'CASCADE' })
+  profile: Profile[];
+
+  @OneToOne(() => ScheduleEntity, schedule => schedule.user_id, { onDelete: 'CASCADE' })
+  schedule: ScheduleEntity[];
 }

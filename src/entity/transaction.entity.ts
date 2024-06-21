@@ -1,6 +1,6 @@
-import { Payment } from 'src/entity/payment.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
 
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
+import { Payment } from './payment/payment.entity';
 @Entity()
 export class Transaction {
   @PrimaryGeneratedColumn()

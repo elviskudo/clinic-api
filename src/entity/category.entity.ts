@@ -1,5 +1,5 @@
-import { Drug } from 'src/entity/drug.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Drug } from './drug/drug.entity';
 
 @Entity()
 export class Category {
@@ -9,9 +9,9 @@ export class Category {
   @Column()
   category_name: string;
 
-  @Column('text')
+  @Column('text', { nullable: true })
   description: string;
 
-  @OneToMany((type) => Drug, (drug) => drug.category_id)
-  drug: Drug[];
+  @OneToMany(() => Drug, (drug) => drug.category)
+  drugs: Drug[];
 }
