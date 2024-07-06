@@ -23,4 +23,7 @@ export class CreateWilayahDto {
 
   @IsInt()
   city_id: number;
+
+  @IsInt()
+  wilayah_id: number;
 }

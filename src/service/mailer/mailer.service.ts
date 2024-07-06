@@ -5,16 +5,15 @@ import { Injectable } from '@nestjs/common';
 export class mailService {
   constructor(private readonly mailService: MailerService) {}
 
-  sendMail(email: any, subject: any, otp: any, name: any) {
-
+  sendMail(email: string, subjek: string, otp: number, nama: string) {
     this.mailService.sendMail({
       from: 'Founder DusunWEB <founder.dusunweb@gmail.com>',
       to: email,
-      subject: subject,
+      subject: subjek,
       template: './mailer',
       context: {
-        name,
-        otp,
+        name: nama,
+        otp: otp.toString().split(''),
       },
     });
   }

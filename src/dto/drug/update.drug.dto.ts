@@ -13,13 +13,11 @@ export class UpdateDrugDto {
   @IsNotEmpty()
   drug_summary: string;
 
-  @IsString()
   @IsNotEmpty()
-  buy_price: string;
+  buy_price: number;
 
-  @IsString()
   @IsNotEmpty()
-  sell_price: string;
+  sell_price: number;
 
   @IsString()
   @IsNotEmpty()

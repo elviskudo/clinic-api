@@ -1,5 +1,17 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+  JoinColumn,
+} from 'typeorm';
 import { MedicalRecordDrug } from 'src/entity/medical_record_drug.entity';
+import { Poly } from '../clinic/poly.entity';
+import { Doctor } from '../clinic/doctor.entity';
+import { Clinic } from '../clinic/clinic.entity';
+import { User } from '../profile/user.entity';
 
 @Entity()
 export class Record {
@@ -8,15 +20,6 @@ export class Record {
 
   @Column()
   consultation_date_time: Date;
-
-  @Column()
-  polyclinic: string;
-
-  @Column()
-  clinic_name: string;
-
-  @Column()
-  doctor_name: string;
 
   @Column()
   way_to_come: string;
@@ -52,14 +55,34 @@ export class Record {
   solution: string;
 
   @Column()
+  user_id: number;
+
+  @Column()
+  poly_id: number;
+
+  @Column()
   clinic_id: number;
 
   @Column()
-  user_id: number;
+  doctor_id: number;
 
-  @OneToMany(
-    (type) => MedicalRecordDrug,
-    (medical_record_drug) => medical_record_drug.id,
-  )
+  @ManyToOne(() => User, (user) => user.records)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @ManyToOne(() => Poly, (poly) => poly.records)
+  @JoinColumn({ name: 'poly_id' })
+  poly: Poly;
+
+  @ManyToOne(() => Clinic, (clinic) => clinic.records)
+  @JoinColumn({ name: 'clinic_id' })
+  clinic: Clinic;
+
+  @ManyToOne(() => Doctor, (doctor) => doctor.record)
+  @JoinColumn({ name: 'doctor_id' })
+  doctor: Doctor;
+
+  @ManyToMany(() => MedicalRecordDrug)
+  @JoinTable()
   medical_record_drug: MedicalRecordDrug[];
 }

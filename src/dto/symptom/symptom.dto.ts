@@ -1,4 +1,4 @@
-import { IsString, MaxLength } from 'class-validator';
+import { IsInt, IsString, MaxLength } from 'class-validator';
 
 export class SymptomDto {
   @IsString()
@@ -7,4 +7,7 @@ export class SymptomDto {
 
   @IsString()
   description: string;
+
+  @IsInt()
+  poly_id: number;
 }

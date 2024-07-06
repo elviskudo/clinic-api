@@ -15,7 +15,7 @@ export class WilayahService {
     page: number,
     limit: number,
     order: 'ASC' | 'DESC' = 'ASC',
-  ): Promise<Wilayah[]> {
+  ) {
     const skip = (page - 1) * limit;
 
     const whereClause = query ? { kabupaten: Like(`%${query}%`) } : {};
@@ -28,6 +28,16 @@ export class WilayahService {
         kabupaten: order,
       },
     });
-    return cities;
+
+    const result = cities.map(cities => ({
+      id : parseInt(cities.id.toString(), 10),
+      provinsi : cities.provinsi,
+      kabupaten : cities.kabupaten,
+      kecamatan: cities.kecamatan,
+      kelurahan: cities.kelurahan
+    }));
+
+
+    return result;
   }
 }

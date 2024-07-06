@@ -25,7 +25,7 @@ export class PolyController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'manager', 'operator')
   async create(@Body() polyDto: PolyDto, @Res() res: Response) {
     try {
       const createdPoly = await this.polyService.createPoly(polyDto);
@@ -59,7 +59,7 @@ export class PolyController {
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'manager', 'operator')
   async update(
     @Param('id') id: string,
     @Body() updatePolyDto: UpdatePolyDto,
@@ -97,7 +97,7 @@ export class PolyController {
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'patient', 'doctor')
+  @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
   async findAll(@Res() res: Response) {
     try {
       const polies = await this.polyService.findAll();
@@ -131,7 +131,7 @@ export class PolyController {
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'patient', 'doctor')
+  @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
       const poly = await this.polyService.findOne(+id);
@@ -165,7 +165,7 @@ export class PolyController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'manager', 'operator')
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
       await this.polyService.removePoly(+id);

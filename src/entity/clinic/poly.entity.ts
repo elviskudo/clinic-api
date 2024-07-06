@@ -1,20 +1,33 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  JoinColumn,
+  ManyToOne,
+} from 'typeorm';
 import { Clinic } from './clinic.entity';
+import { Record } from '../latest/record.entity';
+import { Doctor } from './doctor.entity';
 
 @Entity()
 export class Poly {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('bigint')
-  clinic_id: number;
-
   @Column({ length: 32 })
   name: string;
 
-  @Column('text', { nullable: true })
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @ManyToMany((type) => Clinic, (clinic) => clinic.id)
-  clinic: Clinic[];
+  @Column('bigint')
+  clinic_id: number;
+
+  @ManyToOne(() => Clinic, (clinic) => clinic.poly)
+  @JoinColumn({ name: 'clinic_id' })
+  clinic: Clinic;
+
+  @OneToMany(() => Record, (record) => record.doctor)
+  records: Record[];
 }

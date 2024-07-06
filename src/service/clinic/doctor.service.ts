@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DoctorDto } from 'src/dto/clinic/doctor.dto';
 import { UpdateDoctorDto } from 'src/dto/clinic/update.doctor.dto';
 import { Doctor } from 'src/entity/clinic/doctor.entity';
-import { Repository } from 'typeorm';
+import { Like, Repository } from 'typeorm';
 import { PolyService } from './poly.service';
 import { WilayahService } from '../location/location.service';
 
@@ -16,9 +16,10 @@ export class DoctorService {
     private readonly polyService: PolyService,
   ) {}
 
-  async createDoctor(doctorDto: DoctorDto): Promise<Doctor> {
+  async createDoctor(doctorDto: DoctorDto): Promise<any> {
     const doctor = this.doctorRepository.create(doctorDto);
-    return this.doctorRepository.save(doctor);
+    const savedDoctor = await this.doctorRepository.save(doctor);
+    return this.mapToPostDoctorResponse(savedDoctor);
   }
 
   async updateDoctor(
@@ -26,44 +27,94 @@ export class DoctorService {
     updateDoctorDto: UpdateDoctorDto,
   ): Promise<Doctor> {
     await this.doctorRepository.update(id, updateDoctorDto);
-    return this.doctorRepository.findOne({ where: { id } });
+    return this.findOne(id);
   }
 
-  async findOne(id: number): Promise<Doctor> {
-    return this.doctorRepository.findOne({ where: { id } });
+  async findOne(id: number): Promise<any> {
+    const doctor = await this.doctorRepository.findOne({
+      where: { id },
+      relations: ['poly', 'wilayah'],
+    });
+    return this.mapToDoctorResponse(doctor);
   }
 
-  async findAll(): Promise<Doctor[]> {
-    return this.doctorRepository.find();
+  async findAll(
+    query: string,
+    page: number,
+    limit: number,
+    order: 'ASC' | 'DESC' = 'ASC',
+  ): Promise<any[]> {
+    const skip = (page - 1) * limit;
+
+    const whereClause = query
+      ? [
+          { doctor_name: Like(`%${query}%`) },
+          { description: Like(`%${query}%`) },
+          { address: Like(`%${query}%`) },
+          { education: Like(`%${query}%`) },
+        ]
+      : {};
+
+    const doctors = await this.doctorRepository.find({
+      where: whereClause,
+      take: limit || 10,
+      skip: skip || 0,
+      order: {
+        doctor_name: order,
+      },
+      relations: ['poly', 'wilayah'],
+    });
+
+    return doctors.map((doctor) => this.mapToDoctorResponse(doctor));
   }
 
   async removeDoctor(id: number): Promise<void> {
     await this.doctorRepository.delete(id);
   }
 
-  // async getDoctorWithPolyAndCity(doctorId: number): Promise<any> {
-  //   const doctor = await this.findOne(doctorId);
-  //   if (!doctor) {
-  //     return null;
-  //   }
+  private mapToDoctorResponse(doctor: Doctor): any {
+    return {
+      id: doctor.id,
+      doctor_name: doctor.doctor_name,
+      description: doctor.description,
+      address: doctor.address,
+      post_code: doctor.post_code,
+      latitude: doctor.latitude,
+      longitude: doctor.longitude,
+      title: doctor.title,
+      experience: doctor.experience,
+      education: doctor.education,
+      poly_id: doctor.poly_id,
+      poly: {
+        id: doctor.poly.id,
+        name: doctor.poly.name,
+        description: doctor.poly.description,
+        clinic_id: doctor.poly.clinic_id,
+      },
+      wilayah_id: doctor.wilayah_id,
+      wilayah: {
+        id: doctor.wilayah.id,
+        provinsi: doctor.wilayah.provinsi,
+        kabupaten: doctor.wilayah.kabupaten,
+        kecamatan: doctor.wilayah.kecamatan,
+        kelurahan: doctor.wilayah.kelurahan,
+      },
+    };
+  }
 
-  //   const cityData = await this.wilayahService.getByCityId(doctor.city_id);
-  //   const polyData = await this.polyService.getById(doctor.poly_id);
-
-  //   const doctorDto: DoctorDto = {
-  //     poly_id: doctor.poly_id,
-  //     doctor_name: doctor.doctor_name,
-  //     description: doctor.description,
-  //     address: doctor.address,
-  //     city_id: doctor.city_id,
-  //     post_code: doctor.post_code,
-  //     latitude: doctor.latitude,
-  //     longitude: doctor.longitude,
-  //     title: doctor.title,
-  //     education: doctor.education,
-  //     experience: doctor.experience,
-  //   };
-
-  //   return { doctor: doctorDto, city: cityData, poly: polyData };
-  // }
+  private mapToPostDoctorResponse(doctor: Doctor): any {
+    return {
+      doctor_name: doctor.doctor_name,
+      description: doctor.description,
+      address: doctor.address,
+      post_code: doctor.post_code,
+      latitude: doctor.latitude,
+      longitude: doctor.longitude,
+      title: doctor.title,
+      experience: doctor.experience,
+      education: doctor.education,
+      poly_id: doctor.poly_id,
+      wilayah_id: doctor.wilayah_id,
+    };
+  }
 }

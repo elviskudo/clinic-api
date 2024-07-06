@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as jwt from 'jsonwebtoken';
 import { AppointMentEntity } from 'src/entity/appointment/appointment.entity';
+import { empty } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class AppointmentService {
@@ -19,6 +20,16 @@ export class AppointmentService {
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
       const userId = extracttoken.userId;
 
+      if(!user_id) {
+        return {
+          status: false,
+          message: 'params wajib di isi',
+          data: {
+            date: false,
+            time: null
+          },
+        };
+      }
      
         const records = await this.AppointmentReposity.find({
           where: {

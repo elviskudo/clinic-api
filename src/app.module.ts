@@ -45,9 +45,13 @@ import { mailService } from 'src/service/mailer/mailer.service';
 import { JwtStrategy } from 'src/middleware/jwt.strategy';
 import { paymentModule } from './modules/payment/payment.module';
 import { FeedbackModule } from './modules/feedback.module';
-import { TermModule } from './modules/term/term.module';
 import { TermCategoryModule } from './modules/term/term.category.module';
 import { DiagnosisModule } from './modules/diagnosis.module';
+import { TermModule } from './modules/term/term.module';
+import { BankCategoryModule } from './modules/bank/bank.category.module';
+import { configurationsModule } from './modules/configurations.module';
+import { FeeModule } from './modules/fee/fee.module';
+import { PaymentDetailsModule } from './modules/payment/payment.details.module';
 
 @Module({
   controllers: [AuthController],
@@ -126,7 +130,11 @@ import { DiagnosisModule } from './modules/diagnosis.module';
     RedeemModule,
     paymentModule,
     FeedbackModule,
-    DiagnosisModule
+    DiagnosisModule,
+    BankCategoryModule,
+    configurationsModule,
+    FeeModule,
+    PaymentDetailsModule,
   ],
 })
 export class AppModule implements NestModule {

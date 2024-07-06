@@ -1,5 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Payment } from '../payment/payment.entity';
+import { BankCategory } from './bank.category.entity';
 
 @Entity()
 export class Bank {
@@ -24,6 +32,13 @@ export class Bank {
   @Column('text', { nullable: true })
   bank_images?: string;
 
-  // @ManyToOne((type) => Payment, (payment) => payment.bank_id)
-  // payment: Payment[];
+  @Column()
+  bank_category_id: number;
+
+  @ManyToOne(() => BankCategory, (bankCategory) => bankCategory.banks)
+  @JoinColumn({ name: 'bank_category_id' })
+  bank_category: BankCategory;
+
+  @OneToMany(() => Payment, (payment) => payment.bank)
+  payments: Payment[];
 }

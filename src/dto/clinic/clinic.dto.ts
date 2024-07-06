@@ -12,9 +12,6 @@ export class ClinicDto {
   @MaxLength(64)
   address: string;
 
-  @IsNumber()
-  city_id: number;
-
   @IsString()
   @MaxLength(10)
   post_code: string;
@@ -24,4 +21,7 @@ export class ClinicDto {
 
   @IsNumber()
   longitude: number;
+
+  @IsNumber()
+  city_id: number;
 }

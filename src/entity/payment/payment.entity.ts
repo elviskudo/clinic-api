@@ -7,9 +7,11 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
-  ManyToMany
+  ManyToMany,
+  OneToMany,
 } from 'typeorm';
 import { LastRedeem } from '../latest/last.redeem.entity';
+import { PaymentDetails } from './payment.details.entity';
 
 export enum paymentStatus {
   SUCCESS = 'success',
@@ -29,16 +31,19 @@ export class Payment {
   @Column()
   redeem_id: number;
 
-  @ManyToOne(() => LastRedeem, last => last.id)
+  @ManyToOne(() => LastRedeem, (last) => last.id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'redeem_id' })
   LastRedeem: LastRedeem;
 
   @Column()
   bank_id: number;
 
-  @ManyToOne(() => Bank, banks => banks.id)
+  @ManyToOne(() => Bank, (banks) => banks.id)
   @JoinColumn({ name: 'bank_id' })
   bank: Bank;
+
+  @OneToMany(() => PaymentDetails, (paymentDetails) => paymentDetails.payment)
+  paymentDetails: PaymentDetails[];
 
   @Column()
   status: string;

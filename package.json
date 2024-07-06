@@ -46,6 +46,7 @@
     "mysql2": "^3.9.7",
     "nodemailer": "^6.9.13",
     "passport": "^0.7.0",
+    "passport-google-oauth2": "^0.2.0",
     "passport-jwt": "^4.0.1",
     "pug": "^3.0.2",
     "reflect-metadata": "^0.2.0",

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, isNumber } from 'class-validator';
 
 export class DrugDto {
   @IsString()
@@ -13,13 +13,11 @@ export class DrugDto {
   @IsNotEmpty()
   drug_summary: string;
 
-  @IsString()
   @IsNotEmpty()
-  buy_price: string;
+  buy_price: number;
 
-  @IsString()
   @IsNotEmpty()
-  sell_price: string;
+  sell_price: number;
 
   @IsString()
   @IsNotEmpty()

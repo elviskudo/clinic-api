@@ -28,7 +28,7 @@ export class WilayahController {
           limit,
           order,
         },
-        data: cities,
+        data: cities
       };
     } catch (error) {
       return {

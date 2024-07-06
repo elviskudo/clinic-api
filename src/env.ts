@@ -30,6 +30,12 @@ import { Feedback } from './entity/feedback.entity';
 import { Term } from './entity/term/term.entity';
 import { TermCategory } from './entity/term/term.category.entity';
 import { DiagnosisEntity } from './entity/diagnosis.entity';
+import { Ticket } from './entity/term/ticket.entity';
+import { ScheduleDoctorEntity } from './entity/appointment/schedules_doctor';
+import { BankCategory } from './entity/bank/bank.category.entity';
+import { configurations } from './entity/configurations.entity';
+import { Fee } from './entity/fee/fee.entity';
+import { PaymentDetails } from './entity/payment/payment.details.entity';
 
 export const DATABASE_ENTITIES = [
   Bank,
@@ -61,7 +67,13 @@ export const DATABASE_ENTITIES = [
   ScheduleEntity,
   Payment,
   Feedback,
-  DiagnosisEntity
+  DiagnosisEntity,
+  Ticket,
+  ScheduleDoctorEntity,
+  BankCategory,
+  configurations,
+  Fee,
+  PaymentDetails,
 ];
 
 export const format_json = (

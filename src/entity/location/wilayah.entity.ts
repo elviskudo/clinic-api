@@ -1,9 +1,16 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
+import { Clinic } from '../clinic/clinic.entity';
+import { Doctor } from '../clinic/doctor.entity';
 
 @Entity('wilayah')
 export class Wilayah {
-  @PrimaryColumn({ type: 'varchar', length: 255 })
-  id: string;
+  @PrimaryColumn('bigint', {
+    transformer: {
+      from: (value: string) => parseInt(value, 10),
+      to: (value: number) => value.toString(),
+    },
+  })
+  id: number;
 
   @Column({ type: 'varchar', length: 255 })
   provinsi: string;
@@ -17,6 +24,9 @@ export class Wilayah {
   @Column({ type: 'varchar', length: 255 })
   kelurahan: string;
 
-  @Column({ type: 'int' })
-  city_id: number;
+  @OneToMany(() => Clinic, (clinic) => clinic.city)
+  clinics: Clinic[];
+
+  @OneToMany(() => Doctor, (doctor) => doctor.wilayah)
+  doctors: Doctor[];
 }

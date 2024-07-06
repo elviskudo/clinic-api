@@ -25,12 +25,35 @@ export class SymptomService {
     return this.symptomRepository.findOne({ where: { id } });
   }
 
-  async findOne(id: number): Promise<Symptom> {
-    return this.symptomRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    const get = await this.symptomRepository.findOne({
+      where: { id },
+      relations: ['poly'],
+    });
+
+    return {
+      id: get.id,
+      name: get.name,
+      description: get.description,
+      poly_id: get.poly_id,
+      poly: get.poly,
+    };
   }
 
-  async findAll(): Promise<Symptom[]> {
-    return this.symptomRepository.find();
+  async findAll() {
+    const get = await this.symptomRepository.find({
+      relations: ['poly'],
+    });
+
+    const result = get.map((get) => ({
+      id: get.id,
+      name: get.name,
+      description: get.description,
+      poly_id: get.poly_id,
+      poly: get.poly,
+    }));
+
+    return result;
   }
 
   async removeSymptom(id: number): Promise<void> {

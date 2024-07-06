@@ -1,18 +1,10 @@
-import {
-  IsString,
-  IsInt,
-  IsOptional,
-  IsLatitude,
-  IsLongitude,
-  MaxLength,
-} from 'class-validator';
+import { IsInt, IsString, IsDate, IsOptional } from 'class-validator';
 
 export class DoctorDto {
   @IsInt()
-  poly_id: number;
+  id: number;
 
   @IsString()
-  @MaxLength(64)
   doctor_name: string;
 
   @IsOptional()
@@ -20,24 +12,18 @@ export class DoctorDto {
   description: string;
 
   @IsString()
-  @MaxLength(64)
   address: string;
 
-  @IsInt()
-  city_id: number;
-
   @IsString()
-  @MaxLength(10)
   post_code: string;
 
-  @IsLatitude()
+  @IsInt()
   latitude: number;
 
-  @IsLongitude()
+  @IsInt()
   longitude: number;
 
   @IsString()
-  @MaxLength(32)
   title: string;
 
   @IsOptional()
@@ -47,4 +33,25 @@ export class DoctorDto {
   @IsOptional()
   @IsString()
   education: string;
+
+  @IsInt()
+  poly_id: number;
+
+  @IsInt()
+  wilayah_id: number;
+
+  poly: {
+    id: number;
+    name: string;
+    description: string;
+    clinic_id: number;
+  };
+
+  wilayah: {
+    id: number;
+    provinsi: string;
+    kabupaten: string;
+    kecamatan: string;
+    kelurahan: string;
+  };
 }

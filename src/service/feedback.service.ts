@@ -39,7 +39,7 @@ export class FeedbackService {
       } else {
         return {
           status: false,
-          message: 'No payment records found for this user',
+          message: 'No feedback records found for this user',
           data: null,
         };
       }
@@ -69,10 +69,14 @@ export class FeedbackService {
 
       
       if (saved) {
+        const getfeedback = await this.feedbackReposity.findOne({
+          where: { id: create.id },
+          relations: ['profile']
+        });
         return {
           status: true,
           message: 'Data successfully created',
-          data: create,
+          data: getfeedback,
         };
       } else {
         return {

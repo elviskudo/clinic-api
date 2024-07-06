@@ -10,6 +10,7 @@ import {
   Res,
   HttpException,
   HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -26,7 +27,7 @@ export class DoctorController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'manager', 'operator')
   async create(@Body() doctorDto: DoctorDto, @Res() res: Response) {
     try {
       const createdDoctor = await this.doctorService.createDoctor(doctorDto);
@@ -60,7 +61,7 @@ export class DoctorController {
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'manager', 'operator')
   async update(
     @Param('id') id: string,
     @Body() updateDoctorDto: UpdateDoctorDto,
@@ -101,10 +102,21 @@ export class DoctorController {
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'patient', 'doctor')
-  async findAll(@Res() res: Response) {
+  @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
+  async findAll(
+    @Query('q') query: string = '',
+    @Query('page') page: number = null,
+    @Query('limit') limit: number = null,
+    @Query('order') order: 'ASC' | 'DESC' = 'ASC',
+    @Res() res: Response,
+  ) {
     try {
-      const doctors = await this.doctorService.findAll();
+      const doctors = await this.doctorService.findAll(
+        query,
+        page,
+        limit,
+        order,
+      );
       return res
         .status(200)
         .json(
@@ -135,7 +147,7 @@ export class DoctorController {
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'patient', 'doctor')
+  @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
       const doctor = await this.doctorService.findOne(+id);
@@ -169,7 +181,7 @@ export class DoctorController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin')
+  @Roles('admin', 'manager', 'operator')
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
       await this.doctorService.removeDoctor(+id);
@@ -200,39 +212,4 @@ export class DoctorController {
         );
     }
   }
-
-  // @Get(':id/with-poly-and-city')
-  // async getDoctorWithPolyAndCity(
-  //   @Param('id') id: number,
-  //   @Res() res: Response,
-  // ) {
-  //   try {
-  //     const doctor = await this.doctorService.getDoctorWithPolyAndCity(id);
-  //     return res
-  //       .status(200)
-  //       .json(
-  //         format_json(
-  //           200,
-  //           true,
-  //           null,
-  //           null,
-  //           'Doctor with poly and city retrieved successfully',
-  //           doctor,
-  //         ),
-  //       );
-  //   } catch (error) {
-  //     return res
-  //       .status(500)
-  //       .json(
-  //         format_json(
-  //           500,
-  //           false,
-  //           'Internal Server Error',
-  //           null,
-  //           'Failed to retrieve doctor with poly and city',
-  //           null,
-  //         ),
-  //       );
-  //   }
-  // }
 }

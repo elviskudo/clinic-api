@@ -18,10 +18,12 @@ export class Term {
   @Column('text')
   content: string;
 
+  @ManyToOne(() => TermCategory, (termCategory) => termCategory.terms, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'term_category_id' })
+  term_category: TermCategory;
+
   @Column()
   term_category_id: number;
-
-  @ManyToOne(() => TermCategory, (termCategory) => termCategory.id)
-  @JoinColumn({ name: 'term_category_id' })
-  termCategory: TermCategory;
 }

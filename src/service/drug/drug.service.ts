@@ -19,6 +19,7 @@ export class DrugService {
   ): Promise<Drug | undefined> {
     return this.drugRepository.findOne({
       where: { drug_name, company_name },
+      relations: ['category','redeem'],
     });
   }
 
@@ -34,33 +35,34 @@ export class DrugService {
           false,
           'Bad Request',
           null,
-          'Drug with this name and company already exists',
+          'Drug with this name and company already existss',
           null,
         ),
         400,
       );
     }
     const drug = this.drugRepository.create(drugDto);
-    return this.drugRepository.save(drug);
+    await this.drugRepository.save(drug);
+    return this.drugRepository.findOne({ where: { id: drug.id }, relations: ['category','redeem'] });
   }
 
   async updateDrug(id: number, updateDrugDto: UpdateDrugDto): Promise<Drug> {
     await this.drugRepository.update(id, { ...updateDrugDto });
     return this.drugRepository.findOne({
       where: { id },
-      relations: ['category'],
+      relations: ['category','redeem'],
     });
   }
 
   async findOne(id: number): Promise<Drug> {
     return this.drugRepository.findOne({
       where: { id },
-      relations: ['category'],
+      relations: ['category','redeem'],
     });
   }
 
   async findAll(): Promise<Drug[]> {
-    return this.drugRepository.find({ relations: ['category'] });
+    return this.drugRepository.find({ relations: ['category','redeem'] });
   }
 
   async removeDrug(id: number): Promise<void> {

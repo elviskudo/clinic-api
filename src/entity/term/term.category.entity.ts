@@ -1,4 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Term } from './term.entity';
 
 @Entity()
 export class TermCategory {
@@ -7,4 +8,7 @@ export class TermCategory {
 
   @Column({ length: 64 })
   name: string;
+
+  @OneToMany(() => Term, (term) => term.term_category)
+  terms: Term[];
 }

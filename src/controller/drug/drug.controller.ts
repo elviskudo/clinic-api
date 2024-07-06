@@ -17,6 +17,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 import { format_json } from 'src/env';
+import { RolesGuard } from 'src/middleware/role.guard';
+import { Roles } from 'src/middleware/role.decorator';
 import { DrugDto } from 'src/dto/drug/drug.dto';
 import { UpdateDrugDto } from 'src/dto/drug/update.drug.dto';
 import { DrugService } from 'src/service/drug/drug.service';
@@ -26,7 +28,8 @@ export class DrugController {
   constructor(private readonly drugService: DrugService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'manager', 'operator')
   async create(@Body() drugDto: DrugDto, @Res() res: Response) {
     try {
       const createdDrug = await this.drugService.createDrug(drugDto);
@@ -51,9 +54,7 @@ export class DrugController {
             false,
             error.getResponse ? error.getResponse()['errors'] : 'Bad Request',
             null,
-            error.getResponse
-              ? error.getResponse()['message']
-              : 'Failed to create drug',
+            error.getResponse ? error.getResponse()['message'] : error.message,
             null,
           ),
         );
@@ -61,7 +62,8 @@ export class DrugController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'manager', 'operator')
   async update(
     @Param('id') id: string,
     @Body() updateDrugDto: UpdateDrugDto,
@@ -100,7 +102,8 @@ export class DrugController {
   }
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'manager', 'operator')
   async findAll(@Res() res: Response) {
     try {
       const drugs = await this.drugService.findAll();
@@ -133,7 +136,8 @@ export class DrugController {
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'manager', 'operator')
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
       const drug = await this.drugService.findOne(+id);
@@ -173,7 +177,8 @@ export class DrugController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'manager', 'operator')
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
       await this.drugService.removeDrug(+id);

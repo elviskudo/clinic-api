@@ -12,10 +12,9 @@ export class BankService {
     private bankRepository: Repository<Bank>,
   ) {}
 
-  async createBank(bankDto: BankDto): Promise<Partial<Bank>> {
+  async createBank(bankDto: BankDto): Promise<Bank> {
     const bank = this.bankRepository.create(bankDto);
-    const savedBank = await this.bankRepository.save(bank);
-    return this.BankOutput(savedBank);
+    return this.bankRepository.save(bank);
   }
 
   async updateBank(
@@ -23,38 +22,25 @@ export class BankService {
     updateBankDto: UpdateBankDto,
   ): Promise<Partial<Bank>> {
     await this.bankRepository.update(id, updateBankDto);
-    const updatedBank = await this.bankRepository.findOne({ where: { id } });
-    return this.BankOutput(updatedBank);
+    return this.bankRepository.findOne({
+      where: { id },
+      relations: ['bank_category'],
+    });
   }
 
   async findOne(id: number): Promise<Partial<Bank>> {
-    const bank = await this.bankRepository.findOne({ where: { id } });
-    return this.BankOutput(bank);
+    return this.bankRepository.findOne({
+      where: { id },
+      relations: ['bank_category'],
+    });
   }
 
   async findAll(): Promise<Partial<Bank>[]> {
-    const banks = await this.bankRepository.find();
-    return banks.map((bank) => this.BankOutput(bank));
+    return this.bankRepository.find({ relations: ['bank_category'] });
   }
 
-  async removeBank(id: number): Promise<void> {
-    await this.bankRepository.delete(id);
-  }
-
-  private BankOutput(bank: Bank): Partial<Bank> {
-    const {
-      bank_name,
-      account_number,
-      account_name,
-      service_charge,
-      handling_fee,
-    } = bank;
-    return {
-      bank_name,
-      account_number,
-      account_name,
-      service_charge,
-      handling_fee,
-    };
+  async removeBank(id: number): Promise<boolean> {
+    const deleteResult = await this.bankRepository.delete(id);
+    return deleteResult.affected > 0;
   }
 }

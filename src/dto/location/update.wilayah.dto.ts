@@ -29,4 +29,8 @@ export class UpdateWilayahDto {
   @IsOptional()
   @IsInt()
   city_id?: number;
+
+  @IsOptional()
+  @IsInt()
+  wilayah_id?: number;
 }

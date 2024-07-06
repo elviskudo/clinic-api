@@ -7,54 +7,71 @@ import {
 } from 'class-validator';
 
 export class UpdateMedicalRecordDto {
+  @IsOptional()
   @IsDate()
-  consultation_date_time: Date;
+  consultation_date_time?: Date;
 
+  @IsOptional()
   @IsString()
-  polyclinic: string;
+  polyclinic?: string;
 
+  @IsOptional()
   @IsString()
-  clinic_name: string;
+  clinic_name?: string;
 
+  @IsOptional()
   @IsString()
-  doctor_name: string;
+  doctor_name?: string;
 
+  @IsOptional()
   @IsString()
-  way_to_come: string;
+  way_to_come?: string;
 
+  @IsOptional()
   @IsDate()
-  visiting_time: Date;
+  visiting_time?: Date;
 
+  @IsOptional()
   @IsString()
-  transportation: string;
+  transportation?: string;
 
+  @IsOptional()
   @IsString()
-  reference: string;
+  reference?: string;
 
+  @IsOptional()
   @IsString()
-  person_responsible: string;
+  person_responsible?: string;
 
+  @IsOptional()
   @IsString()
-  traumatic: string;
+  traumatic?: string;
 
+  @IsOptional()
   @IsString()
-  non_traumatic: string;
+  non_traumatic?: string;
 
+  @IsOptional()
   @IsString()
-  conditions: string;
+  conditions?: string;
 
+  @IsOptional()
   @IsString()
-  complaint: string;
+  complaint?: string;
 
+  @IsOptional()
   @IsString()
-  history_of_illness: string;
+  history_of_illness?: string;
 
+  @IsOptional()
   @IsString()
-  solution: string;
+  solution?: string;
 
+  @IsOptional()
   @IsInt()
-  clinic_id: number;
+  clinic_id?: number;
 
+  @IsOptional()
   @IsInt()
-  user_id: number;
+  user_id?: number;
 }

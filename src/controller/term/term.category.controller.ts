@@ -14,12 +14,16 @@ import { format_json } from 'src/env';
 import { TermCategoryDto } from 'src/dto/term/term.category.dto';
 import { UpdateTermCategoryDto } from 'src/dto/term/update.term.category.dto';
 import { TermCategoryService } from 'src/service/term/term.category.service';
+import { Roles } from 'src/middleware/role.decorator';
+import { RolesGuard } from 'src/middleware/role.guard';
 
 @Controller('api/term-categories')
+@UseGuards(RolesGuard)
 export class TermCategoryController {
   constructor(private readonly termCategoryService: TermCategoryService) {}
 
   @Post()
+  @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
   async create(@Body() termCategoryDto: TermCategoryDto) {
     try {
@@ -49,6 +53,7 @@ export class TermCategoryController {
   }
 
   @Put(':id')
+  @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
   async update(
     @Param('id') id: string,
@@ -84,6 +89,7 @@ export class TermCategoryController {
   }
 
   @Get()
+  @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
   async findAll() {
     try {
@@ -112,6 +118,7 @@ export class TermCategoryController {
   }
 
   @Get(':id')
+  @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
   async findOne(@Param('id') id: string) {
     try {
@@ -140,6 +147,7 @@ export class TermCategoryController {
   }
 
   @Delete(':id')
+  @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
   async remove(@Param('id') id: string) {
     try {

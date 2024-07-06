@@ -1,4 +1,13 @@
-import { IsOptional, IsString, MaxLength, IsPhoneNumber, IsNotEmpty, IsDate, IsInt } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsPhoneNumber,
+  IsNotEmpty,
+  IsDate,
+  IsInt,
+  isString,
+} from 'class-validator';
 
 export class ProfileDto {
   @IsOptional()
@@ -64,4 +73,8 @@ export class ProfileDto {
   @IsOptional()
   @IsInt()
   area_code: number;
+
+  @IsOptional()
+  @IsString()
+  responsible_for_costs: string;
 }

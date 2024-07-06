@@ -25,9 +25,9 @@ export class LastMedicalRecordService {
         order: { consultation_date_time: 'DESC' },
         select: [
           'consultation_date_time',
-          'doctor_name',
-          'polyclinic',
-          'clinic_name',
+          // 'doctor_name',
+          // 'polyclinic',
+          // 'clinic_name',
           'conditions',
         ],
       });

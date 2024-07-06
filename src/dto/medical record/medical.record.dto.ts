@@ -11,15 +11,6 @@ export class MedicalRecordDto {
   consultation_date_time: Date;
 
   @IsString()
-  polyclinic: string;
-
-  @IsString()
-  clinic_name: string;
-
-  @IsString()
-  doctor_name: string;
-
-  @IsString()
   way_to_come: string;
 
   @IsDate()
@@ -51,9 +42,6 @@ export class MedicalRecordDto {
 
   @IsString()
   solution: string;
-
-  @IsInt()
-  clinic_id: number;
 
   @IsInt()
   user_id: number;

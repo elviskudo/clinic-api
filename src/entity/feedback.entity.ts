@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinColumn, ManyToOne } from 'typeorm';
 import { Profile } from './profile/profile.entity';
 
 
@@ -10,7 +10,7 @@ export class Feedback {
   @Column()
   user_id: number;
   
-  @ManyToMany(() => Profile, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Profile, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id', referencedColumnName: 'user_id' })
   profile: Profile;
 

@@ -1,5 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Bank } from '../bank/bank.entity';
+import { Profile } from '../profile/profile.entity';
+import { Drug } from '../drug/drug.entity';
+import { Payment } from '../payment/payment.entity';
 @Entity()
 export class LastRedeem {
   @PrimaryGeneratedColumn()
@@ -19,10 +29,21 @@ export class LastRedeem {
 
   @Column()
   bank_id: number;
+  @ManyToOne(() => Bank, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'bank_id', referencedColumnName: 'id' })
+  bank: Bank;
 
   @Column()
   user_id: number;
+  @ManyToOne(() => Profile, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id', referencedColumnName: 'user_id' })
+  profile: Profile;
 
-  @OneToMany((type) => LastRedeem, (lastredeem) => lastredeem.id)
-  lastredeem: LastRedeem[];
+  @OneToMany(() => Drug, (drug) => drug.redeem)
+  drugs: Drug[];
+
+  @OneToMany(() => Payment, (payment) => payment.LastRedeem, {
+    cascade: ['remove'],
+  })
+  payments: Payment[];
 }

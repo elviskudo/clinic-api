@@ -23,6 +23,7 @@ export class SummaryService {
       const userId = extracttoken.userId;
     
       const summary = await this.summaryRepository.find({
+        where: { patient_id: userId },
         relations: ['poly', 'doctor','profile','doctordata'],
       });
 

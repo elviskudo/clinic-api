@@ -1,5 +1,16 @@
 import { Schedule } from 'src/entity/schedule.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
+import { Record } from '../latest/record.entity';
+import { Poly } from './poly.entity';
+import { Wilayah } from '../location/wilayah.entity';
+import { Exclude } from 'class-transformer';
 
 @Entity()
 export class Doctor {
@@ -33,12 +44,6 @@ export class Doctor {
   @Column({ length: 64 })
   address: string;
 
-  @Column('bigint')
-  city_id: number;
-
-  @Column('int')
-  poly_id: number;
-
   @Column({ length: 10 })
   post_code: string;
 
@@ -57,6 +62,23 @@ export class Doctor {
   @Column('text', { nullable: true })
   education: string;
 
+  @Column('int')
+  poly_id: number;
+
+  @Column('bigint')
+  wilayah_id: number;
+
+  @ManyToOne(() => Poly, (poly) => poly.id)
+  @JoinColumn({ name: 'poly_id' })
+  poly: Poly;
+
+  @ManyToOne(() => Wilayah, (wilayah) => wilayah.doctors)
+  @JoinColumn({ name: 'wilayah_id' })
+  wilayah: Wilayah;
+
   @OneToMany((type) => Schedule, (schedule) => schedule.doctor_id)
   schedule: Schedule[];
+
+  @OneToMany(() => Record, (record) => record.doctor)
+  record: Record[];
 }

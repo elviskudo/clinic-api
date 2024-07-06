@@ -1,68 +1,44 @@
-<!DOCTYPE html>
-<html lang="id">
+<html lang='id'>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <title>Konfirmasi OTP</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
-      .container {
-        background-color: #84cc53;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        text-align: center;
-        max-width: 400px;
-        width: 100%;
-      }
-      h1 {
-        font-size: 24px;
-        margin-bottom: 10px;
-      }
-      p {
-        font-size: 16px;
-        margin-bottom: 20px;
-      }
-      .otp-container {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 20px;
-      }
-      .otp-input {
-        width: 40px;
-        height: 50px;
-        font-size: 24px;
-        text-align: center;
-        border: 2px solid #a8d888;
-        border-radius: 4px;
-      }
-      .otp-input:focus {
-        outline: none;
-        border-color: #777777;
-      }
-      .note {
-        font-size: 14px;
-        color: #fff;
-      }
+      body { font-family: Arial, sans-serif; background-color: #f4f4f4; display:
+      flex; justify-content: center; align-items: center; height: 100vh; margin:
+      0; } .container { background-color: #84cc53; padding: 20px; border-radius:
+      8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); text-align: center;
+      max-width: 400px; width: 100%; } h1 { font-size: 24px; margin-bottom:
+      10px; } p { font-size: 16px; margin-bottom: 20px; } .otp-container {
+      display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+      .otp-input { width: 40px; height: 50px; font-size: 24px; text-align:
+      center; border: 2px solid #a8d888; border-radius: 4px; } .otp-input:focus
+      { outline: none; border-color: #777777; } .note { font-size: 14px; color:
+      #fff; text-align: center; }
     </style>
   </head>
   <body>
-    <div class="container">
-      <p style="text-align: left;margin-bottom: 0px;"><b>Hi</b>, {{name}}</p>
-      <p style="text-align: left;">Berikut adalah kode konfirmasi email anda:</p>
-      <div class="otp-container">
-          <input type="text" class="otp-input" value="{{otp}}" maxlength="6"/>
+    <div class='container'>
+      <p style='text-align: left; margin-bottom: 0px;'><b>Hi</b>, {{name}}</p>
+      <p style='text-align: left;'>Berikut adalah kode konfirmasi email Anda:</p>
+      <div class='otp-container'>
+        {{#each otp}}
+          <input
+            type='text'
+            class='otp-input'
+            maxlength='1'
+            value='{{this}}'
+            readonly
+          />
+        {{/each}}
       </div>
-      <p class="note">Kode ini hanya berlaku selama 5 menit.</p>
+      <p class='note'>Kode ini hanya berlaku selama 5 menit.</p>
     </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() { const inputs =
+      document.querySelectorAll(".otp-input"); inputs.forEach((input, index) =>
+      { input.addEventListener("input", () => { if (input.value.length === 1 &&
+      index < inputs.length - 1) { inputs[index + 1].focus(); } }); }); });
+    </script>
   </body>
 </html>
