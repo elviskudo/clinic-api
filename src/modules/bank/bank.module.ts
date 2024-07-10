@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BankCategory } from 'src/entity/bank/bank.category.entity';
 import { BankCategoryController } from 'src/controller/bank/bank.category.controller';
+import { PrismaModule } from 'src/prisma.module';
 import { BankCategoryService } from 'src/service/bank/bank.category.service';
-import { User } from 'src/entity/profile/user.entity';
-import { Role } from 'src/entity/role.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BankCategory, User, Role])],
+  imports: [PrismaModule],
   controllers: [BankCategoryController],
   providers: [BankCategoryService],
 })

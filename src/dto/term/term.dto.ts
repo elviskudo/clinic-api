@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsNotEmpty,
   IsNumber,
@@ -7,21 +8,18 @@ import {
 } from 'class-validator';
 
 export class TermDto {
-  @IsNumber()
-  @IsNotEmpty()
-  term_category_id: number;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  term_category_id: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
   @MaxLength(255)
+  @ApiProperty()
   title: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   content: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
 }

@@ -1,38 +1,40 @@
-import { IsString, IsNumber, MaxLength, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNumber, MaxLength, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class UpdateClinicDto {
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @MaxLength(64)
+  @ApiProperty()
   clinic_name?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
+  @ApiProperty()
   description?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @MaxLength(64)
+  @ApiProperty()
   address?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @MaxLength(10)
+  @ApiProperty()
   post_code?: string;
 
-  @IsOptional()
-  @IsNumber()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   latitude?: number;
 
-  @IsOptional()
-  @IsNumber()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   longitude?: number;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   @IsNumber()
   city_id?: number;
-
-  @IsOptional()
-  @IsNumber()
-  wilayahId?: number; 
 }

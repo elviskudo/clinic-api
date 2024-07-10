@@ -1,37 +1,81 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ProfileConfiguration } from 'src/entity/profile_config/profile.config.entity';
+import { PrismaService } from 'src/prisma.service';
 import { Repository } from 'typeorm';
+import { ZodError, z } from 'zod';
+import * as jwt from 'jsonwebtoken';
+import { connect } from 'http2';
 
 @Injectable()
 export class ProfileConfigurationService {
   constructor(
-    @InjectRepository(ProfileConfiguration)
-    private readonly profileConfigRepository: Repository<ProfileConfiguration>,
+    private prisma: PrismaService,
   ) {}
 
-  findByUserId(userId: number): Promise<ProfileConfiguration> {
-    return this.profileConfigRepository.findOne({
-      where: { user: { id: userId } },
+  async findByUserId(token: string) {
+    const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
+      var userId = extracttoken.userId;
+    }
+
+    return await this.prisma.profileConfiguration.findFirst({
+      where: {
+        user_id : userId
+      },
+      include: {
+        user: true
+      }
     });
   }
 
-  async create(
-    profileConfig: Partial<ProfileConfiguration>,
-  ): Promise<ProfileConfiguration> {
-    const newConfig = this.profileConfigRepository.create(profileConfig);
-    return this.profileConfigRepository.save(newConfig);
-  }
-
   async update(
-    userId: number,
-    updateData: Partial<ProfileConfiguration>,
-  ): Promise<ProfileConfiguration> {
-    const config = await this.findByUserId(userId);
-    if (!config) {
-      throw new NotFoundException('Profile configuration not found');
+    token: string,
+    data,
+  ) {
+    const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
+      var userId = extracttoken.userId;
     }
-    Object.assign(config, updateData);
-    return this.profileConfigRepository.save(config);
+
+    const check = await this.prisma.profileConfiguration.findFirst({
+      where: {
+        user_id : userId
+      },
+      include: {
+        user: true
+      }
+    });
+
+    if(check){
+      const update = await this.prisma.profileConfiguration.update({
+        where: {
+          id : check.id
+        },
+        data:  Object.assign(check, data),
+        include: {
+          user: true
+        }
+      });
+
+      return update
+    } else {
+      const create = await this.prisma.profileConfiguration.create({
+        data: {
+          isLocation: true,
+          isPushNotification: true,
+          isEmailNotification: true,
+          user : {
+            connect: {
+              id: userId
+            }
+          }
+        },
+        include: {
+          user: true
+        }
+      });
+    }
   }
 }

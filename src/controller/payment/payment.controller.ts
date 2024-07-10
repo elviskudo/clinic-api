@@ -9,15 +9,19 @@ import {
   Res,
   Body,
   Param,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { format_json } from 'src/env';
 import { PaymentService } from 'src/service/payment/payment.service';
 import { paymentDTO } from 'src/dto/payment/payment.dto';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
 import { RolesGuard } from 'src/middleware/role.guard';
 import { Roles } from 'src/middleware/role.decorator';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Payment')
 @Controller('api/users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class PaymentController {
@@ -25,6 +29,8 @@ export class PaymentController {
 
   @Get('payment')
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async getPayment(@Req() req: Request, @Res() res: Response) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -78,20 +84,17 @@ export class PaymentController {
       return res
         .status(400)
         .json(
-          format_json(
-            400,
-            false,
-            true,
-            null,
-            'Server Error ' + error.message,
-            error.message,
-          ),
+          format_json(400, false, true, null, 'Server Error ' + error, error),
         );
     }
   }
 
   @Post('payment')
+  @UseGuards(AuthGuard('jwt'))
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async createPayment(
     @Body() createDTO: paymentDTO,
     @Req() req: Request,
@@ -149,22 +152,20 @@ export class PaymentController {
       return res
         .status(400)
         .json(
-          format_json(
-            400,
-            false,
-            true,
-            null,
-            'Server Error ' + error.message,
-            error,
-          ),
+          format_json(400, false, true, null, 'Server Error ' + error, error),
         );
     }
   }
 
   @Put('payment/:id')
+  @UseGuards(AuthGuard('jwt'))
+  @UsePipes(CustomValidationPipe)
+  @Put('payment/:id')
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async updatePayment(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() createDTO: paymentDTO,
     @Req() req: Request,
     @Res() res: Response,
@@ -221,22 +222,17 @@ export class PaymentController {
       return res
         .status(400)
         .json(
-          format_json(
-            400,
-            false,
-            true,
-            null,
-            'Server Error ' + error.message,
-            error,
-          ),
+          format_json(400, false, true, null, 'Server Error ' + error, error),
         );
     }
   }
 
   @Delete('payment/:id')
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async deletePayment(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Req() req: Request,
     @Res() res: Response,
   ) {
@@ -299,14 +295,7 @@ export class PaymentController {
       return res
         .status(400)
         .json(
-          format_json(
-            400,
-            false,
-            true,
-            null,
-            'Server Error ' + error.message,
-            error,
-          ),
+          format_json(400, false, true, null, 'Server Error ' + error, error),
         );
     }
   }

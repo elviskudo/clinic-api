@@ -1,36 +1,39 @@
-import { IsOptional, IsString, IsInt, Length } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsOptional, IsString, IsInt, Length, IsNotEmpty } from 'class-validator';
 
 export class UpdateWilayahDto {
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @Length(1, 255)
+  @ApiProperty()
   id?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @Length(1, 255)
+  @ApiProperty()
   provinsi?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @Length(1, 255)
+  @ApiProperty()
   kabupaten?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @Length(1, 255)
+  @ApiProperty()
   kecamatan?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
   @Length(1, 255)
+  @ApiProperty()
   kelurahan?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsInt()
-  city_id?: number;
-
-  @IsOptional()
-  @IsInt()
+  @ApiProperty()
   wilayah_id?: number;
 }

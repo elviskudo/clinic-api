@@ -1,41 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Wilayah } from 'src/entity/location/wilayah.entity';
+import { PrismaService } from 'src/prisma.service';
 import { Repository, Like } from 'typeorm';
 
 @Injectable()
 export class WilayahService {
   constructor(
-    @InjectRepository(Wilayah)
-    private readonly wilayahRepository: Repository<Wilayah>,
+    private prisma: PrismaService,
   ) {}
 
   async getCities(
     query: string,
     page: number,
     limit: number,
-    order: 'ASC' | 'DESC' = 'ASC',
+    order: 'asc' | 'desc' = 'asc',
   ) {
     const skip = (page - 1) * limit;
 
-    const whereClause = query ? { kabupaten: Like(`%${query}%`) } : {};
+    const whereClause = query
+    ? {
+        OR: [
+          { provinsi: { contains: query, mode: 'insensitive' } },
+          { kabupaten: { contains: query, mode: 'insensitive' } },
+          { kecamatan: { contains: query, mode: 'insensitive' } },
+          { kelurahan: { contains: query, mode: 'insensitive' } },
+        ],
+      }
+    : {};
 
-    const cities = await this.wilayahRepository.find({
+    const result = this.prisma.wilayah.findMany({
       where: whereClause,
       take: limit || 10,
       skip: skip || 0,
-      order: {
+      orderBy: {
         kabupaten: order,
       },
-    });
-
-    const result = cities.map(cities => ({
-      id : parseInt(cities.id.toString(), 10),
-      provinsi : cities.provinsi,
-      kabupaten : cities.kabupaten,
-      kecamatan: cities.kecamatan,
-      kelurahan: cities.kelurahan
-    }));
+    })
 
 
     return result;

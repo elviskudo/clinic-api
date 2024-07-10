@@ -3,39 +3,92 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TermCategoryDto } from 'src/dto/term/term.category.dto';
 import { UpdateTermCategoryDto } from 'src/dto/term/update.term.category.dto';
-import { TermCategory } from 'src/entity/term/term.category.entity';
+import { ZodError, z } from 'zod';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TermCategoryService {
   constructor(
-    @InjectRepository(TermCategory)
-    private termCategoryRepository: Repository<TermCategory>,
+    private prisma: PrismaService,
   ) {}
 
   async createTermCategory(
     termCategoryDto: TermCategoryDto,
-  ): Promise<TermCategory> {
-    const termCategory = this.termCategoryRepository.create(termCategoryDto);
-    return this.termCategoryRepository.save(termCategory);
+  ) {
+    const schema = z.object({
+      name: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(termCategoryDto);
+      const create = await this.prisma.termCategory.create({
+        data  : {
+          name: validatedData.name,
+          },
+        })
+
+      return create;
+
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
   }
 
   async updateTermCategory(
-    id: number,
+    id: string,
     updateTermCategoryDto: UpdateTermCategoryDto,
-  ): Promise<TermCategory> {
-    await this.termCategoryRepository.update(id, updateTermCategoryDto);
-    return this.termCategoryRepository.findOne({ where: { id } });
+  ) {
+    const schema = z.object({
+      name: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(updateTermCategoryDto);
+      const update = await this.prisma.termCategory.update({
+        where: { id: id },
+        data  : {
+          name: validatedData.name,
+          },
+        })
+
+      return update;
+
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
   }
 
-  async findAll(): Promise<TermCategory[]> {
-    return this.termCategoryRepository.find();
+  async findAll() {
+    return await this.prisma.termCategory.findMany();
   }
 
-  async findOne(id: number): Promise<TermCategory> {
-    return this.termCategoryRepository.findOne({ where: { id } });
+  async findOne(id: string) {
+    return await this.prisma.termCategory.findUnique({
+      where: {id : id}
+    });
   }
 
-  async removeTermCategory(id: number): Promise<void> {
-    await this.termCategoryRepository.delete(id);
+  async removeTermCategory(id: string) {
+    return await this.prisma.termCategory.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

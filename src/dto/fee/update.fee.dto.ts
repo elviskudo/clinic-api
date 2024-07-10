@@ -1,16 +1,20 @@
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsString, Min } from 'class-validator';
 
 export class UpdateFeeDto {
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsInt()
+  @ApiProperty()
   clinic_id?: number;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsString()
+  @ApiProperty()
   activities?: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
   @IsInt()
   @Min(0)
+  @ApiProperty()
   cost?: number;
 }

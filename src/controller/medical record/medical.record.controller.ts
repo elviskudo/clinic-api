@@ -8,6 +8,7 @@ import {
   Param,
   Res,
   UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -17,13 +18,21 @@ import { MedicalRecordService } from 'src/service/medical record/medical.record.
 import { MedicalRecordDto } from 'src/dto/medical record/medical.record.dto';
 import { UpdateMedicalRecordDto } from 'src/dto/medical record/update.medical.record.dto';
 import { RecordResponseDto } from 'src/dto/medical record/medical.record.response.dto';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { Roles } from 'src/middleware/role.decorator';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Medical Records')
 @Controller('api/medicalrecords')
 export class MedicalRecordController {
   constructor(private readonly medicalRecordService: MedicalRecordService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(
     @Body() medicalRecordDto: MedicalRecordDto,
     @Res() res: Response,
@@ -53,7 +62,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to create medical record',
-            error.message || error,
+            error || error,
           ),
         );
     }
@@ -61,14 +70,18 @@ export class MedicalRecordController {
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin')
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update(
     @Param('id') id: string,
-    @Body() updateMedicalRecordDto: UpdateMedicalRecordDto,
+    @Body() updateMedicalRecordDto: MedicalRecordDto,
     @Res() res: Response,
   ) {
     try {
       const updatedRecord = await this.medicalRecordService.updateRecord(
-        +id,
+        id,
         updateMedicalRecordDto,
       );
       if (!updatedRecord) {
@@ -107,7 +120,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to update medical record',
-            error.message || error,
+            error || error,
           ),
         );
     }
@@ -115,6 +128,8 @@ export class MedicalRecordController {
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findAll(@Res() res: Response) {
     try {
       const records = await this.medicalRecordService.findAll();
@@ -140,7 +155,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to retrieve medical records',
-            error.message || error,
+            error || error,
           ),
         );
     }
@@ -148,9 +163,11 @@ export class MedicalRecordController {
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'Details' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-      const record = await this.medicalRecordService.findOne(+id);
+      const record = await this.medicalRecordService.findOne(id);
       if (!record) {
         return res
           .status(404)
@@ -187,7 +204,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to retrieve medical record',
-            error.message || error,
+            error || error,
           ),
         );
     }
@@ -195,9 +212,11 @@ export class MedicalRecordController {
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      const record = await this.medicalRecordService.findOne(+id);
+      const record = await this.medicalRecordService.findOne(id);
       if (!record) {
         return res
           .status(404)
@@ -212,7 +231,7 @@ export class MedicalRecordController {
             ),
           );
       }
-      await this.medicalRecordService.removeRecord(+id);
+      await this.medicalRecordService.removeRecord(id);
       return res
         .status(200)
         .json(
@@ -235,7 +254,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to delete medical record',
-            error.message || error,
+            error || error,
           ),
         );
     }

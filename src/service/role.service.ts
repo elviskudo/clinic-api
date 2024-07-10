@@ -1,33 +1,91 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from 'src/prisma.service';
 import { Repository } from 'typeorm';
-import { Role } from '../entity/role.entity';
+import { ZodError, z } from 'zod';
 
 @Injectable()
 export class RoleService {
   constructor(
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
+    private prisma: PrismaService,
   ) {}
 
-  async findAll(): Promise<Role[]> {
-    return this.roleRepository.find();
+  async findAll() {
+    return await this.prisma.role.findMany();
   }
 
-  async findById(id): Promise<Role> {
-    return this.roleRepository.findOne(id);
+  async findById(id: string) {
+    return await this.prisma.role.findUnique({
+      where: {id : id}
+    });
   }
 
-  async create(role: Role): Promise<Role> {
-    return this.roleRepository.save(role);
+  async create(role) {
+    const schema = z.object({
+      name: z.string().min(1),
+      description: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(role);
+      const create = await this.prisma.role.create({
+        data  : {
+          name: validatedData.name,
+          description: validatedData.description
+          },
+        })
+
+      return create;
+
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
   }
 
-  async update(id, role: Role): Promise<Role> {
-    await this.roleRepository.update(id, role);
-    return this.roleRepository.findOne(id);
+  async update(id: string, role) {
+    const schema = z.object({
+      name: z.string().min(1),
+      description: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(role);
+      const update = await this.prisma.role.update({
+        where: { id: id },
+        data  : {
+          name: validatedData.name,
+          description: validatedData.description
+          },
+        })
+
+      return update;
+
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
   }
 
-  async delete(id: number): Promise<void> {
-    await this.roleRepository.delete(id);
+  async delete(id: string) {
+    return await this.prisma.role.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

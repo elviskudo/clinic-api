@@ -11,6 +11,7 @@ import {
   HttpException,
   HttpStatus,
   Query,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -20,14 +21,20 @@ import { format_json } from 'src/env';
 import { DoctorService } from 'src/service/clinic/doctor.service';
 import { UpdateDoctorDto } from 'src/dto/clinic/update.doctor.dto';
 import { DoctorDto } from 'src/dto/clinic/doctor.dto';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Doctor')
 @Controller('api/doctors')
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(@Body() doctorDto: DoctorDto, @Res() res: Response) {
     try {
       const createdDoctor = await this.doctorService.createDoctor(doctorDto);
@@ -43,25 +50,28 @@ export class DoctorController {
             createdDoctor,
           ),
         );
-    } catch (error) {
-      return res
-        .status(400)
-        .json(
-          format_json(
-            400,
-            false,
-            'Bad Request',
-            null,
-            'Failed to create doctor',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update(
     @Param('id') id: string,
     @Body() updateDoctorDto: UpdateDoctorDto,
@@ -69,7 +79,7 @@ export class DoctorController {
   ) {
     try {
       const updatedDoctor = await this.doctorService.updateDoctor(
-        +id,
+        id,
         updateDoctorDto,
       );
       return res
@@ -84,30 +94,32 @@ export class DoctorController {
             updatedDoctor,
           ),
         );
-    } catch (error) {
-      return res
-        .status(400)
-        .json(
-          format_json(
-            400,
-            false,
-            'Bad Request',
-            null,
-            'Failed to update doctor',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findAll(
     @Query('q') query: string = '',
     @Query('page') page: number = null,
     @Query('limit') limit: number = null,
-    @Query('order') order: 'ASC' | 'DESC' = 'ASC',
+    @Query('order') order: 'asc' | 'desc' = 'asc',
     @Res() res: Response,
   ) {
     try {
@@ -129,28 +141,30 @@ export class DoctorController {
             doctors,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to retrieve doctors',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
+  @ApiOperation({ summary: 'Details' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-      const doctor = await this.doctorService.findOne(+id);
+      const doctor = await this.doctorService.findOne(id);
       return res
         .status(200)
         .json(
@@ -163,28 +177,30 @@ export class DoctorController {
             doctor,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to retrieve doctor',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      await this.doctorService.removeDoctor(+id);
+      await this.doctorService.removeDoctor(id);
       return res
         .status(200)
         .json(
@@ -197,19 +213,19 @@ export class DoctorController {
             null,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to delete doctor',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 }

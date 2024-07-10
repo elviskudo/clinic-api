@@ -8,15 +8,19 @@ import {
   Param,
   UseGuards,
   HttpException,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { format_json } from 'src/env';
 import { TermCategoryDto } from 'src/dto/term/term.category.dto';
 import { UpdateTermCategoryDto } from 'src/dto/term/update.term.category.dto';
 import { TermCategoryService } from 'src/service/term/term.category.service';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
 import { Roles } from 'src/middleware/role.decorator';
 import { RolesGuard } from 'src/middleware/role.guard';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Term Category')
 @Controller('api/term-categories')
 @UseGuards(RolesGuard)
 export class TermCategoryController {
@@ -24,7 +28,10 @@ export class TermCategoryController {
 
   @Post()
   @Roles('admin', 'manager', 'operator')
-  @UseGuards(AuthGuard('jwt'))
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(@Body() termCategoryDto: TermCategoryDto) {
     try {
       const createdTermCategory =
@@ -37,7 +44,7 @@ export class TermCategoryController {
         'Term category created successfully',
         createdTermCategory,
       );
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(
         format_json(
           400,
@@ -45,7 +52,7 @@ export class TermCategoryController {
           'Bad Request',
           null,
           'Failed to create term category',
-          null,
+          error.message,
         ),
         400,
       );
@@ -54,7 +61,10 @@ export class TermCategoryController {
 
   @Put(':id')
   @Roles('admin', 'manager', 'operator')
-  @UseGuards(AuthGuard('jwt'))
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update(
     @Param('id') id: string,
     @Body() updateTermCategoryDto: UpdateTermCategoryDto,
@@ -62,7 +72,7 @@ export class TermCategoryController {
     try {
       const updatedTermCategory =
         await this.termCategoryService.updateTermCategory(
-          +id,
+          id,
           updateTermCategoryDto,
         );
       return format_json(
@@ -73,7 +83,7 @@ export class TermCategoryController {
         'Term category updated successfully',
         updatedTermCategory,
       );
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(
         format_json(
           400,
@@ -81,7 +91,7 @@ export class TermCategoryController {
           'Bad Request',
           null,
           'Failed to update term category',
-          null,
+          error.message,
         ),
         400,
       );
@@ -90,7 +100,9 @@ export class TermCategoryController {
 
   @Get()
   @Roles('admin', 'manager', 'operator')
-  @UseGuards(AuthGuard('jwt'))
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findAll() {
     try {
       const termCategories = await this.termCategoryService.findAll();
@@ -102,27 +114,29 @@ export class TermCategoryController {
         'Term categories retrieved successfully',
         termCategories,
       );
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(
         format_json(
-          500,
+          400,
           false,
-          'Internal Server Error',
+          'Bad Request',
           null,
-          'Failed to retrieve term categories',
-          null,
+          'Failed to get term category',
+          error.message,
         ),
-        500,
+        400,
       );
     }
   }
 
   @Get(':id')
   @Roles('admin', 'manager', 'operator')
-  @UseGuards(AuthGuard('jwt'))
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'Details' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findOne(@Param('id') id: string) {
     try {
-      const termCategory = await this.termCategoryService.findOne(+id);
+      const termCategory = await this.termCategoryService.findOne(id);
       return format_json(
         200,
         true,
@@ -131,27 +145,29 @@ export class TermCategoryController {
         'Term category retrieved successfully',
         termCategory,
       );
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(
         format_json(
-          500,
+          400,
           false,
-          'Internal Server Error',
+          'Bad Request',
           null,
-          'Failed to retrieve term category',
-          null,
+          'Failed to get term category',
+          error.message,
         ),
-        500,
+        400,
       );
     }
   }
 
   @Delete(':id')
   @Roles('admin', 'manager', 'operator')
-  @UseGuards(AuthGuard('jwt'))
+   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async remove(@Param('id') id: string) {
     try {
-      await this.termCategoryService.removeTermCategory(+id);
+      await this.termCategoryService.removeTermCategory(id);
       return format_json(
         200,
         true,
@@ -160,17 +176,17 @@ export class TermCategoryController {
         'Term category deleted successfully',
         null,
       );
-    } catch (error) {
+    } catch (error: any) {
       throw new HttpException(
         format_json(
-          500,
+          400,
           false,
-          'Internal Server Error',
+          'Bad Request',
           null,
           'Failed to delete term category',
-          null,
+          error.message,
         ),
-        500,
+        400,
       );
     }
   }

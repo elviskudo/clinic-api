@@ -1,46 +1,142 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { BankDto } from 'src/dto/bank/bank.dto';
-import { UpdateBankDto } from 'src/dto/bank/update.bank.dto';
-import { Bank } from 'src/entity/bank/bank.entity';
-import { Repository } from 'typeorm';
+import { PrismaService } from 'src/prisma.service';
+import { z, ZodError } from 'zod';
 
 @Injectable()
 export class BankService {
-  constructor(
-    @InjectRepository(Bank)
-    private bankRepository: Repository<Bank>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async createBank(bankDto: BankDto): Promise<Bank> {
-    const bank = this.bankRepository.create(bankDto);
-    return this.bankRepository.save(bank);
+  async createBank(bankDto: any) {
+    const schema = z.object({
+      bank_name: z.string().min(1),
+      account_number: z.string().min(1),
+      account_name: z.string().min(1),
+      service_charge: z.number().int().optional(),
+      handling_fee: z.number().int().optional(),
+      bank_images: z.number().int().optional(),
+      bank_category_id: z.string().uuid(),
+    });
+
+    try {
+      const validatedData = schema.parse(bankDto);
+      const create = this.prisma.bank.create({
+        data: {
+          bank_name: validatedData.bank_name,
+          account_number: validatedData.account_number,
+          account_name: validatedData.account_name,
+          service_charge: validatedData.service_charge,
+          handling_fee: validatedData.handling_fee,
+          bank_images: validatedData.bank_images,
+          bank_category: {
+            connect: {
+              id: validatedData.bank_category_id,
+            },
+          },
+        },
+        include: {
+          bank_category: true,
+        },
+      });
+
+      return create;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
-  async updateBank(
-    id: number,
-    updateBankDto: UpdateBankDto,
-  ): Promise<Partial<Bank>> {
-    await this.bankRepository.update(id, updateBankDto);
-    return this.bankRepository.findOne({
-      where: { id },
-      relations: ['bank_category'],
+  async updateBank(id: string, updateBankDto: any) {
+    const schema = z.object({
+      bank_name: z.string().min(1).optional(),
+      account_number: z.string().min(1).optional(),
+      account_name: z.string().min(1).optional(),
+      service_charge: z.number().int().optional(),
+      handling_fee: z.number().int().optional(),
+      bank_images: z.number().int().optional(),
+      bank_category_id: z.string().uuid().optional(),
+    });
+
+    try {
+      const validatedData = schema.parse(updateBankDto);
+      const update = this.prisma.bank.update({
+        where: { id: id },
+        data: {
+          bank_name: validatedData.bank_name,
+          account_number: validatedData.account_number,
+          account_name: validatedData.account_name,
+          service_charge: validatedData.service_charge,
+          handling_fee: validatedData.handling_fee,
+          bank_images: validatedData.bank_images,
+          bank_category: validatedData.bank_category_id
+            ? {
+                connect: {
+                  id: validatedData.bank_category_id,
+                },
+              }
+            : undefined,
+        },
+        include: {
+          bank_category: true,
+        },
+      });
+
+      return update;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
+  }
+
+  async findOne(id: string) {
+    return await this.prisma.bank.findUnique({
+      where: { id: id },
+      include: {
+        bank_category: true,
+      },
     });
   }
 
-  async findOne(id: number): Promise<Partial<Bank>> {
-    return this.bankRepository.findOne({
-      where: { id },
-      relations: ['bank_category'],
+  async findAll() {
+    return await this.prisma.bank.findMany({
+      include: {
+        bank_category: true,
+      },
     });
   }
 
-  async findAll(): Promise<Partial<Bank>[]> {
-    return this.bankRepository.find({ relations: ['bank_category'] });
-  }
-
-  async removeBank(id: number): Promise<boolean> {
-    const deleteResult = await this.bankRepository.delete(id);
-    return deleteResult.affected > 0;
+  async removeBank(id: string) {
+    return this.prisma.bank.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

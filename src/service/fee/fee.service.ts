@@ -1,40 +1,122 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
+import { ZodError, z } from 'zod';
 import { FeeDto } from 'src/dto/fee/fee.dto';
 import { UpdateFeeDto } from 'src/dto/fee/update.fee.dto';
-import { Fee } from 'src/entity/fee/fee.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
 export class FeeService {
-  constructor(
-    @InjectRepository(Fee)
-    private feeRepository: Repository<Fee>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async createFee(FeeDto: FeeDto): Promise<Fee> {
-    const fee = this.feeRepository.create(FeeDto);
-    await this.feeRepository.save(fee);
-    return this.feeRepository.findOne({
-      where: { id: fee.id },
-      relations: ['clinic'],
+  async createFee(feeDto: FeeDto) {
+    const schema = z.object({
+      activities: z.string().min(1),
+      cost: z.string().min(1),
+      clinic_id: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(feeDto);
+      const create = await this.prisma.fee.create({
+        data: {
+          activities: validatedData.activities,
+          cost: validatedData.cost,
+          clinic: {
+            connect: {
+              id: validatedData.clinic_id,
+            },
+          },
+        },
+        include: {
+          clinic: true,
+        },
+      });
+
+      return create;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        throw new BadRequestException({
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        });
+      }
+      throw new BadRequestException(e.message || 'Terjadi kesalahan');
+    }
+  }
+
+  async updateFee(id: string, updateFeeDto: UpdateFeeDto) {
+    const schema = z.object({
+      activities: z.string().min(1),
+      cost: z.string().min(1),
+      clinic_id: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(updateFeeDto);
+      const update = await this.prisma.fee.update({
+        where: { id },
+        data: {
+          activities: validatedData.activities,
+          cost: validatedData.cost,
+          clinic: {
+            connect: {
+              id: validatedData.clinic_id,
+            },
+          },
+        },
+        include: {
+          clinic: true,
+        },
+      });
+
+      return update;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        throw new BadRequestException({
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        });
+      }
+      throw new BadRequestException(e.message || 'Terjadi kesalahan');
+    }
+  }
+
+  async findOne(id: string) {
+    return await this.prisma.fee.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        clinic: true,
+      },
     });
   }
 
-  async updateFee(id: number, updateFeeDto: UpdateFeeDto): Promise<Fee> {
-    await this.feeRepository.update(id, updateFeeDto);
-    return this.feeRepository.findOne({ where: { id }, relations: ['clinic'] });
+  async findAll() {
+    return await this.prisma.fee.findMany({
+      include: {
+        clinic: true,
+      },
+    });
   }
 
-  async findOne(id: number): Promise<Fee> {
-    return this.feeRepository.findOne({ where: { id }, relations: ['clinic'] });
-  }
-
-  async findAll(): Promise<Fee[]> {
-    return this.feeRepository.find({ relations: ['clinic'] });
-  }
-
-  async removeFee(id: number): Promise<void> {
-    await this.feeRepository.delete(id);
+  async removefee(id: string) {
+    return this.prisma.fee.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }

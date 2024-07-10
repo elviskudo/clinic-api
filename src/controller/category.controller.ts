@@ -10,6 +10,7 @@ import {
   Res,
   HttpException,
   HttpStatus,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -19,14 +20,20 @@ import { Roles } from 'src/middleware/role.decorator';
 import { CategoryDto } from 'src/dto/category/category.dto';
 import { UpdateCategoryDto } from 'src/dto/category/update.category.dto';
 import { CategoryService } from 'src/service/category.service';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Drug Category')
 @Controller('api/drug-categories')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(@Body() categoryDto: CategoryDto, @Res() res: Response) {
     try {
       const createdCategory =
@@ -43,26 +50,28 @@ export class CategoryController {
             createdCategory,
           ),
         );
-    } catch (error) {
-      return res
-        .status(error.getStatus ? error.getStatus() : 400)
-        .json(
-          format_json(
-            error.getStatus ? error.getStatus() : 400,
-            false,
-            error.getResponse ? error.getResponse()['errors'] : 'Bad Request',
-            null,
-            error.getResponse
-              ? error.getResponse()['message']
-              : 'Failed to create category',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update(
     @Param('id') id: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
@@ -70,7 +79,7 @@ export class CategoryController {
   ) {
     try {
       const updatedCategory = await this.categoryService.updateCategory(
-        +id,
+        id,
         updateCategoryDto,
       );
       return res
@@ -85,26 +94,27 @@ export class CategoryController {
             updatedCategory,
           ),
         );
-    } catch (error) {
-      return res
-        .status(error.getStatus ? error.getStatus() : 400)
-        .json(
-          format_json(
-            error.getStatus ? error.getStatus() : 400,
-            false,
-            error.getResponse ? error.getResponse()['errors'] : 'Bad Request',
-            null,
-            error.getResponse
-              ? error.getResponse()['message']
-              : 'Failed to update category',
-            null,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Get()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findAll(@Res() res: Response) {
     try {
       const categories = await this.categoryService.findAll();
@@ -120,27 +130,30 @@ export class CategoryController {
             categories,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to retrieve categories',
-            error.message || error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Details' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-      const category = await this.categoryService.findOne(+id);
+      const category = await this.categoryService.findOne(id);
       if (!category) {
         return res
           .status(404)
@@ -167,27 +180,30 @@ export class CategoryController {
             category,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to retrieve category',
-            error.message || error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      await this.categoryService.removeCategory(+id);
+      await this.categoryService.removeCategory(id);
       return res
         .status(200)
         .json(
@@ -200,19 +216,19 @@ export class CategoryController {
             null,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to delete category',
-            error.message || error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 }

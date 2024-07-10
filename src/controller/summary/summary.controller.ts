@@ -8,7 +8,8 @@ import {
   Param,
   Res,
   UseGuards,
-  Req
+  Req,
+  UsePipes
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { format_json } from 'src/env';
@@ -16,13 +17,19 @@ import { SummaryDto } from 'src/dto/summary/summary.dto';
 import { SummaryService } from 'src/service/summary/summary.service';
 import { AuthGuard } from '@nestjs/passport';
 import { UpdateSummaryDto } from 'src/dto/summary/update.summary.dto';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from 'src/middleware/role.guard';
 
+@ApiTags('Appointments / Summary')
 @Controller('api/users')
 export class SummaryController {
   constructor(private readonly summaryService: SummaryService) {}
 
-  @Get('appointments')
-  @UseGuards(AuthGuard('jwt'))
+ @Get('appointments')
+ @UseGuards(AuthGuard('jwt'), RolesGuard)
+ @ApiOperation({ summary: 'Get' })
+ @ApiResponse({ status: 200, description: 'Success' })
   async getapp(@Res() res: Response, @Req() req: Request) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -58,19 +65,22 @@ export class SummaryController {
         );
       } else {
         return res.status(400).json(
-          format_json(400, false, null, null, 'Error Server', null)
+          format_json(400, false, null, null, 'Error Server', getdata.data)
         );
       }
     } catch (error) {
       console.error('Server Error:', error);
       return res.status(400).json(
-        format_json(400, false, true, null, 'Server Error '+error.message, error)
+        format_json(400, false, true, null, 'Server Error '+error, error)
       );
     }
   }
 
   @Post('appointments')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Create update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(@Body() summaryDto: SummaryDto, @Res() res: Response, @Req() req: Request) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -106,136 +116,13 @@ export class SummaryController {
         );
       } else {
         return res.status(400).json(
-          format_json(400, false, null, null, 'Error Server', null)
+          format_json(400, false, null, null, 'Error Server', create.data)
         );
       }
     } catch (error) {
       console.error('Server Error:', error);
       return res.status(400).json(
-        format_json(400, false, true, null, 'Server Error '+error.message, error)
-      );
-    }
-  }
-
-  @Put('summary/:id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateSummaryDto: UpdateSummaryDto,
-    @Res() res: Response,
-  ) {
-    try {
-      const updatedSummary = await this.summaryService.updateSummary(
-        +id,
-        updateSummaryDto,
-      );
-      return res.status(200).json(
-        format_json(
-          200,
-          true,
-          null,
-          null,
-          'Summary updated successfully',
-          updatedSummary,
-        )
-      );
-    } catch (error) {
-      console.error('Failed to update summary:', error);
-      return res.status(400).json(
-        format_json(
-          400,
-          false,
-          'Bad Request',
-          null,
-          'Failed to update summary',
-          null,
-        )
-      );
-    }
-  }
-
-  @Get('summary')
-  async findAll(@Res() res: Response) {
-    try {
-      const summaries = await this.summaryService.findAllSummaries();
-      return res.status(200).json(
-        format_json(
-          200,
-          true,
-          null,
-          null,
-          'Summaries retrieved successfully',
-          summaries,
-        )
-      );
-    } catch (error) {
-      console.error('Failed to retrieve summaries:', error);
-      return res.status(500).json(
-        format_json(
-          500,
-          false,
-          'Internal Server Error',
-          null,
-          'Failed to retrieve summaries',
-          null,
-        )
-      );
-    }
-  }
-
-  @Get('summary/:id')
-  async findOne(@Param('id') id: string, @Res() res: Response) {
-    try {
-      const summary = await this.summaryService.findSummaryById(+id);
-      return res.status(200).json(
-        format_json(
-          200,
-          true,
-          null,
-          null,
-          'Summary retrieved successfully',
-          summary,
-        )
-      );
-    } catch (error) {
-      console.error('Failed to retrieve summary:', error);
-      return res.status(500).json(
-        format_json(
-          500,
-          false,
-          'Internal Server Error',
-          null,
-          'Failed to retrieve summary',
-          null,
-        )
-      );
-    }
-  }
-
-  @Delete('summary/:id')
-  async remove(@Param('id') id: string, @Res() res: Response) {
-    try {
-      await this.summaryService.removeSummary(+id);
-      return res.status(200).json(
-        format_json(
-          200,
-          true,
-          null,
-          null,
-          'Summary deleted successfully',
-          null,
-        )
-      );
-    } catch (error) {
-      console.error('Failed to delete summary:', error);
-      return res.status(500).json(
-        format_json(
-          500,
-          false,
-          'Internal Server Error',
-          null,
-          'Failed to delete summary',
-          null,
-        )
+        format_json(400, false, true, null, 'Server Error '+error, error)
       );
     }
   }

@@ -1,11 +1,11 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { AuthService } from 'src/service/auth/auth.service';
 import { Request, Response, NextFunction } from 'express';
 import { format_json } from 'src/env';
+import { AuthenticationService } from 'src/service/auth/authentication.service';
 
 @Injectable()
 export class TokenBlacklistMiddleware implements NestMiddleware {
-  constructor(private readonly blacklistService: AuthService) {}
+  constructor(private readonly blacklistService: AuthenticationService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
     const authorizationHeader = req.headers['authorization'];

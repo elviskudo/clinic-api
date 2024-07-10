@@ -1,0 +1,405 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-initss
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+model wilayah {
+  id    BigInt     @id
+  provinsi String
+  kabupaten String
+  kecamatan String
+  kelurahan String
+  profile Profile[] @relation()
+  clinic Clinic[] @relation()
+  doctor Doctor[] @relation()
+}
+
+model User {
+  id String  @id @default(uuid())
+  email String  @unique
+  password  String
+  role_id String
+  role    Role     @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  verifed Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  profile Profile? @relation
+  otp Otp[] @relation
+  lastredeem LastRedeem[] @relation()
+  record Record[] @relation()
+  profileconfiguration ProfileConfiguration[] @relation()
+  schedule Schedule[] @relation()
+  ticket Ticket[] @relation()
+  payment Payment[] @relation()
+}
+
+model Profile {
+  id String  @id @default(uuid())
+  fullname String
+  phone_number String
+  profil_image   String?   
+  no_identity   String?   
+  birth_date   DateTime? @db.DateTime(0)
+  birth_place  String?   
+  address     String?   
+  gender      String?   
+  work_in      String?   
+  blood_type   String?   
+  marital_status String?   
+  nationality String?   
+  religion    String?   
+  user_id      String      @unique
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  city_id      BigInt?
+  city    wilayah?     @relation(fields: [city_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  neighborhood_no Int?     
+  citizen_no    Int?     
+  area_code     Int?     
+  responsibleForCosts String?   
+  summary Summary[] @relation()
+  diagnosis Diagnosis[] @relation()
+  feedback Feedback[] @relation()
+}
+
+
+model Otp {
+  id String  @id @default(uuid())
+  kode_otp Int
+  user_id   String   
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status Int @default(0)
+  created_at DateTime @default(now())
+
+  @@index([user_id], name: "user_index")
+
+}
+
+model Role {
+  id String  @id @default(uuid())
+  name String
+  description   String? @db.Text
+  user User[] @relation()
+}
+
+model BankCategory {
+  id String  @id @default(uuid())
+  category_name String
+  description String? @db.Text
+  bank Bank[] @relation()
+}
+
+model Bank {
+  id String  @id @default(uuid())
+  bank_name String
+  account_number String
+  account_name String
+  service_charge Int?
+  handling_fee Int?
+  bank_images Int?
+  bank_category_id String
+  bank_category     BankCategory     @relation(fields: [bank_category_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  lastredeem LastRedeem[] @relation()
+  payment Payment[] @relation()
+}
+
+model Clinic {
+  id String  @id @default(uuid())
+  clinic_name String
+  description String? @db.Text
+  address String
+  post_code String
+  latitude Int
+  longitude Int
+  city_id BigInt
+  city    wilayah     @relation(fields: [city_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  poly Poly[] @relation()
+  fee Fee[] @relation()
+  record Record[] @relation()
+  scheduledoctor ScheduleDoctor[] @relation()
+}
+
+model Poly {
+  id String  @id @default(uuid())
+  name String
+  description String? @db.Text
+  clinic_id String
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  doctor Doctor[] @relation()
+  record Record[] @relation()
+  summary Summary[] @relation()
+  scheduledoctor ScheduleDoctor[] @relation()
+  symptom Symptom[] @relation()
+}
+
+model Doctor {
+  id String  @id @default(uuid())
+  doctor_name String
+  place_of_birth String
+  date_of_birth DateTime @db.DateTime(0)
+  specialist String
+  graduate_of String
+  bio String @db.Text
+  document_id Int?
+  description String? @db.Text
+  address String
+  post_code String
+  latitude Int
+  longitude Int
+  title String
+  experience String? @db.Text
+  education String? @db.Text
+  poly_id String
+  poly    Poly     @relation(fields: [poly_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  wilayah_id BigInt
+  city    wilayah     @relation(fields: [wilayah_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  record Record[] @relation()
+  summary Summary[] @relation()
+  scheduledoctor ScheduleDoctor[] @relation()
+  schedule Schedule[] @relation()
+}
+
+model DrugCategory {
+  id String  @id @default(uuid())
+  category_name String
+  description String? @db.Text
+  drug Drug[] @relation()
+}
+
+model Drug {
+  id String  @id @default(uuid())
+  drug_name String
+  stock Int
+  drug_summary String @db.Text
+  buy_price BigInt
+  sell_price BigInt
+  image_url String?
+  company_name String
+  category_id String
+  category DrugCategory  @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  redeem_id String
+  redeem LastRedeem  @relation(fields: [redeem_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  paymentdetails PaymentDetails[] @relation()
+}
+
+model Fee {
+  id String  @id @default(uuid())
+  activities String
+  cost String
+  clinic_id String
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  paymentdetails PaymentDetails[] @relation()
+}
+
+model LastRedeem {
+  id String  @id @default(uuid())
+  redemption_date_and_time DateTime @db.DateTime(0)
+  list_of_medications String @db.Text
+  total_cost String
+  bank_transfer_name String
+  bank_id String
+  bank Bank @relation(fields: [bank_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user_id String
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payment Payment[] @relation()
+  drug Drug[] @relation()
+}
+
+model Record {
+  id String  @id @default(uuid())
+  consultation_date_time DateTime @db.DateTime(0)
+  way_to_come String
+  vistting_time DateTime @db.DateTime(0)
+  transportation String
+  reference String
+  person_responsible String
+  traumatic String
+  non_traumatic String
+  conditions String
+  complaint String @db.Text
+  history_of_illness String @db.Text
+  solution String @db.Text
+  user_id String
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  poly_id String
+  poly    Poly     @relation(fields: [poly_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  clinic_id String
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  doctor_id String
+  doctor Doctor @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Payment {
+  id String  @id @default(uuid())
+  payment_name String
+  redeem_id String
+  redeem LastRedeem @relation(fields: [redeem_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  bank_id String
+  bank Bank @relation(fields: [bank_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user_id String
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  status String
+  paymentdetails PaymentDetails[] @relation()
+  transaction Transaction[] @relation()
+}
+
+model PaymentDetails {
+  id String  @id @default(uuid())
+  payment_id String
+  payment Payment @relation(fields: [payment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  drug_id String
+  drug  Drug @relation(fields: [drug_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  quantity Int
+  fee_id String
+  fee Fee @relation(fields: [fee_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model ProfileConfiguration {
+  id String  @id @default(uuid())
+  isLocation Boolean @default(false)
+  isPushNotification Boolean @default(false)
+  isEmailNotification Boolean @default(false)
+  user_id String
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Summary {
+  id String  @id @default(uuid())
+  poly_id String
+  poly    Poly     @relation(fields: [poly_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  doctor_id String
+  doctor Doctor @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  scheduled_date_time DateTime @db.DateTime(0)
+  qr_code String
+  image_captured_checked Boolean?
+  patient_id String
+  patient Profile @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  approved_by_doctor_id Int?
+  symptoms String
+  symptoms_description String @db.Text
+  status Boolean?
+  ai_status Boolean?
+  ai_response String @db.Text
+  image_url String
+  ai_token String
+  drug     Json
+}
+
+model ScheduleDoctor {
+  id String  @id @default(uuid())
+  date DateTime @db.DateTime(0)
+  time String
+  poly_id String
+  poly    Poly     @relation(fields: [poly_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  clinic_id String
+  clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  doctor_id String
+  doctor Doctor @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Schedule {
+  id String  @id @default(uuid())
+  code String?
+  doctor_id String
+  doctor Doctor @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user_id String
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  date DateTime @db.DateTime(0)
+  approval Boolean?
+  time String
+}
+
+model TermCategory{
+  id String  @id @default(uuid())
+  name String
+  term Term[] @relation()
+}
+
+model Term{
+  id String  @id @default(uuid())
+  title String
+  content String
+  term_category_id String
+  term_category TermCategory @relation(fields: [term_category_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Ticket{
+  id String  @id @default(uuid())
+  title String
+  content String
+  email String
+  user_id String
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Configuration {
+  id String  @id @default(uuid())
+  application_name     String
+  application_version  String
+  application_content  String
+  application_teams    String
+  by_email             String
+  by_email_username    String
+  by_email_password    String
+  to_email             String
+  by_whatsapp          String
+  by_whatsapp_secret   String
+  by_telegram          String
+  by_telegram_secret   String
+}
+
+model Diagnosis {
+  id String  @id @default(uuid())
+  deaseas_name String
+  user_id String
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Document {
+  id String  @id @default(uuid())
+  document_name String
+  document_url String
+}
+
+model Feedback {
+  id String  @id @default(uuid())
+  user_id String
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  content String @db.Text
+}
+
+model Room {
+  id String  @id @default(uuid())
+  room_name String
+  description String? @db.Text
+  clinic_id String
+}
+
+model Symptom {
+  id String  @id @default(uuid())
+  name String
+  description String? @db.Text
+  poly_id String
+  poly Poly @relation(fields: [poly_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Transaction {
+  id String  @id @default(uuid())
+  code           Int
+  consultation   String
+  handling_fees  Int
+  room_cost      BigInt
+  payment_id     String
+  payment        Payment @relation(fields: [payment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+

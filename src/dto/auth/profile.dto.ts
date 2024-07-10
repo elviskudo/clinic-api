@@ -1,3 +1,4 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsOptional,
   IsString,
@@ -10,71 +11,83 @@ import {
 } from 'class-validator';
 
 export class ProfileDto {
-  @IsOptional()
   @MaxLength(64)
+  @IsNotEmpty({ message: 'full name should not be empty' })
+  @ApiProperty()
   fullname: string;
 
-  @IsOptional()
+  @IsNotEmpty({ message: 'phone number should not be empty' })
   @IsPhoneNumber('ID')
+  @ApiProperty()
   phone_number: string;
 
-  @IsInt()
-  @IsNotEmpty({ message: 'no_identity should not be empty' })
+  @IsNotEmpty({ message: 'no identity should not be empty' })
+  @ApiProperty()
   no_identity: string;
 
-  @IsDate()
-  @IsNotEmpty({ message: 'birth_date should not be empty' })
+  @IsOptional()
+  @ApiProperty()
   birth_date: Date;
 
-  @IsInt()
-  @IsNotEmpty({ message: 'birth_place should not be empty' })
+  @IsOptional()
+  @ApiProperty()
   birth_place: string;
 
-  @IsString()
   @IsNotEmpty({ message: 'address should not be empty' })
+  @ApiProperty()
   address: string;
 
-  @IsString()
   @IsNotEmpty({ message: 'gender should not be empty' })
+  @ApiProperty()
   gender: string;
 
   @IsOptional()
   @IsString()
+  @ApiProperty()
   work_in: string;
 
   @IsOptional()
   @IsString()
+  @ApiProperty()
   blood_type: string;
 
   @IsOptional()
   @IsString()
+  @ApiProperty()
   marital_status: string;
 
   @IsOptional()
   @IsString()
+  @ApiProperty()
   nationality: string;
 
   @IsOptional()
   @IsString()
+  @ApiProperty()
   religion: string;
 
   @IsOptional()
   @IsInt()
+  @ApiProperty()
   city_id: number;
 
   @IsOptional()
   @IsInt()
-  neighborhood_no: number;
+  @ApiProperty()
+  neighborhoodNo: number;
 
   @IsOptional()
   @IsInt()
+  @ApiProperty()
   citizen_no: number;
 
   @IsOptional()
   @IsInt()
+  @ApiProperty()
   area_code: number;
 
   @IsOptional()
   @IsString()
-  responsible_for_costs: string;
+  @ApiProperty()
+  responsibleForCosts: string;
 }

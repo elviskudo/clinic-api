@@ -1,16 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, HttpException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
 import * as jwt from 'jsonwebtoken';
-import { Payment } from 'src/entity/payment/payment.entity';
 import { paymentDTO } from 'src/dto/payment/payment.dto';
+import { ZodError, z } from 'zod';
 
 @Injectable()
 export class PaymentService {
-  constructor(
-    @InjectRepository(Payment)
-    private readonly paymentRepository: Repository<Payment>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async getdata(token: string) {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
@@ -18,35 +14,55 @@ export class PaymentService {
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
       const userId = extracttoken.userId;
 
-      const payments = await this.paymentRepository.find({
-        relations: ['bank', 'LastRedeem', 'LastRedeem.drugs'],
-      });
-
-      if (payments.length > 0) {
-        const formattedPayments = payments.map((payment) => ({
-          id: payment.id,
-          payment_name: payment.payment_name,
-          bank: payment.bank,
-          redeem: {
-            redeem_id: payment.redeem_id,
-            drugs: payment.LastRedeem?.drugs.map((drug) => ({
-              id: drug.id,
-              name: drug.drug_name,
-              price: drug.sell_price,
-            })),
+      try {
+        const payments = await this.prisma.payment.findMany({
+          where: { user_id: userId },
+          include: {
+            bank: {
+              include: {
+                bank_category: true,
+              },
+            },
+            redeem: {
+              include: {
+                drug: true,
+              },
+            },
           },
-          status: payment.status,
-        }));
+        });
 
-        return {
-          status: true,
-          message: 'Success to get data',
-          data: formattedPayments,
-        };
-      } else {
+        if (payments.length > 0) {
+          const formattedPayments = payments.map((payment) => ({
+            id: payment.id,
+            payment_name: payment.payment_name,
+            bank: payment.bank,
+            redeem: {
+              redeem_id: payment.redeem_id,
+              drugs: payment.redeem?.drug.map((drug) => ({
+                id: drug.id,
+                name: drug.drug_name,
+                price: drug.sell_price,
+              })),
+            },
+            status: payment.status,
+          }));
+
+          return {
+            status: true,
+            message: 'Success to get data',
+            data: formattedPayments,
+          };
+        } else {
+          return {
+            status: false,
+            message: 'No payment records found for this user',
+            data: null,
+          };
+        }
+      } catch (error) {
         return {
           status: false,
-          message: 'No payment records found for this user',
+          message: 'Failed to retrieve data',
           data: null,
         };
       }
@@ -60,38 +76,45 @@ export class PaymentService {
   }
 
   async createpayment(token: string, data: paymentDTO) {
+    const schema = z.object({
+      payment_name: z.string().min(1),
+      bank_id: z.string().min(1),
+      redeem_id: z.string().min(1),
+    });
+
     try {
+      const validatedData = schema.parse(data);
       const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
       if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
         const userId = extracttoken.userId;
 
-        const create = this.paymentRepository.create({
-          payment_name: data.payment_name,
-          bank_id: data.bank_id,
-          redeem_id: data.redeem_id,
-          status: 'Pending',
+        const create = await this.prisma.payment.create({
+          data: {
+            payment_name: validatedData.payment_name,
+            bank_id: validatedData.bank_id,
+            redeem_id: validatedData.redeem_id,
+            status: 'Pending',
+            user_id: userId,
+          },
+          include: {
+            bank: {
+              include: {
+                bank_category: true,
+              },
+            },
+            redeem: {
+              include: {
+                drug: true,
+              },
+            },
+          },
         });
 
-        const savedPayment = await this.paymentRepository.save(create);
-
-        if (savedPayment) {
-          const paymentData = await this.paymentRepository.findOne({
-            where: { id: create.id },
-            relations: ['bank', 'LastRedeem', 'LastRedeem.drugs'],
-          });
-
-          return {
-            status: true,
-            message: 'Data successfully created',
-            data: paymentData,
-          };
-        } else {
-          return {
-            status: false,
-            message: 'Data cannot be used',
-            data: null,
-          };
-        }
+        return {
+          status: true,
+          message: 'Data successfully created',
+          data: create,
+        };
       } else {
         return {
           status: false,
@@ -99,81 +122,132 @@ export class PaymentService {
           data: null,
         };
       }
-    } catch (error) {
-      return { status: false, message: error.message, data: null };
-    }
-  }
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
 
-  async update(token: string, data: paymentDTO, id: number) {
-    const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
-      const userId = extracttoken.userId;
-
-      const payment = await this.paymentRepository.findOne({
-        where: { id: id },
-        relations: ['bank', 'LastRedeem', 'LastRedeem.drugs'],
-      });
-
-      if (!payment) {
         return {
           status: false,
-          message: 'payment not found',
-          data: null,
+          message: 'Validation failed',
+          errors: errorMessages,
         };
       }
-
-      payment.payment_name = data.payment_name;
-      payment.bank_id = data.bank_id;
-      payment.redeem_id = data.redeem_id;
-
-      const update = await this.paymentRepository.save(payment);
-
-      if (update) {
-        const paymentget = await this.paymentRepository.findOne({
-          where: { id: payment.id },
-          relations: ['bank', 'LastRedeem', 'LastRedeem.drugs'],
-        });
-        return {
-          status: true,
-          message: 'Data successfully updated',
-          data: paymentget,
-        };
-      } else {
-        return {
-          status: false,
-          message: 'System Errors',
-          data: null,
-        };
-      }
-    } else {
       return {
         status: false,
-        message: 'Invalid token',
-        data: null,
+        message: e.message || 'An error occurred',
       };
     }
   }
 
-  async delete(token: string, id: number) {
+  async update(token: string, data: paymentDTO, id: string) {
+    const schema = z.object({
+      payment_name: z.string().min(1).optional(),
+      bank_id: z.string().min(1).optional(),
+      redeem_id: z.string().min(1).optional(),
+    });
+
+    try {
+      const validatedData = schema.parse(data);
+      const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
+        const userId = extracttoken.userId;
+
+        const payment = await this.prisma.payment.findUnique({
+          where: { id: id },
+          include: {
+            bank: {
+              include: {
+                bank_category: true,
+              },
+            },
+            redeem: {
+              include: {
+                drug: true,
+              },
+            },
+          },
+        });
+
+        if (!payment) {
+          return {
+            status: false,
+            message: 'Payment not found',
+            data: null,
+          };
+        }
+
+        const update = await this.prisma.payment.update({
+          where: { id: id },
+          data: validatedData,
+          include: {
+            bank: {
+              include: {
+                bank_category: true,
+              },
+            },
+            redeem: {
+              include: {
+                drug: true,
+              },
+            },
+          },
+        });
+
+        return {
+          status: true,
+          message: 'Data successfully updated',
+          data: update,
+        };
+      } else {
+        return {
+          status: false,
+          message: 'Invalid token',
+          data: null,
+        };
+      }
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validation failed',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'An error occurred',
+      };
+    }
+  }
+
+  async delete(token: string, id: string) {
     const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
       const userId = extracttoken.userId;
 
-      const deletedata = await this.paymentRepository.delete(id);
+      try {
+        await this.prisma.payment.delete({
+          where: { id: id },
+        });
 
-      if (deletedata) {
         return {
           status: true,
-          message: 'Data sucess to deleted',
-          data: null,
+          message: 'Data successfully deleted',
         };
-      } else {
+      } catch (e: any) {
         return {
           status: false,
-          message: 'System Errors',
-          data: null,
+          message: 'Payment not found',
         };
       }
     } else {

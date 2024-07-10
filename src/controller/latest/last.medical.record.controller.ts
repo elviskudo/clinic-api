@@ -3,7 +3,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { format_json } from 'src/env';
 import { LastMedicalRecordService } from 'src/service/latest/last.medical.record.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Last medical record')
 @Controller('api/users')
 export class LastMedicalRecordController {
   constructor(
@@ -12,6 +14,8 @@ export class LastMedicalRecordController {
 
   @Get('last-medical-record')
   @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async getLastMedicalRecord(@Req() req: Request, @Res() res: Response) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -65,14 +69,14 @@ export class LastMedicalRecordController {
               null,
               null,
               lastMedicalRecord.message,
-              null,
+              lastMedicalRecord.data,
             ),
           );
       }
     } catch (error) {
       return res
         .status(500)
-        .json(format_json(500, false, true, null, 'Server Error '+error.message, error));
+        .json(format_json(500, false, true, null, 'Server Error '+error, error));
     }
   }
 }

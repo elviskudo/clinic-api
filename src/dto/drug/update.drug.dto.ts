@@ -1,33 +1,45 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class UpdateDrugDto {
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   drug_name: string;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   stock: number;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   drug_summary: string;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   buy_price: number;
 
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   sell_price: number;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   image_url: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   company_name: string;
 
-  @IsNumber()
-  @IsNotEmpty()
-  category_id: number;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  category_id: string;
+
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  redeem_id: string;
 }

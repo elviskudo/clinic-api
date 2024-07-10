@@ -1,8 +1,10 @@
-import { IsString, MaxLength, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, MaxLength, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class UpdateTermCategoryDto {
   @IsString()
   @MaxLength(64)
-  @IsOptional()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   name?: string;
 }

@@ -9,6 +9,8 @@ import {
   UseGuards,
   Req,
   Res,
+  UsePipes,
+  HttpStatus,
 } from '@nestjs/common';
 
 import { ClinicService } from 'src/service/clinic/clinic.service';
@@ -19,14 +21,20 @@ import { Roles } from 'src/middleware/role.decorator';
 import { format_json } from 'src/env';
 import { ClinicDto } from 'src/dto/clinic/clinic.dto';
 import { Request, Response } from 'express';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Clinic')
 @Controller('api/clinics')
 export class ClinicController {
   constructor(private readonly clinicService: ClinicService) {}
 
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(
     @Body() clinicDto: ClinicDto,
     @Req() req: Request,
@@ -46,25 +54,28 @@ export class ClinicController {
             createdClinic,
           ),
         );
-    } catch (error) {
-      return res
-        .status(400)
-        .json(
-          format_json(
-            400,
-            false,
-            'Bad Request',
-            null,
-            'Failed to create clinic',
-            error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update(
     @Param('id') id: string,
     @Body() updateClinicDto: UpdateClinicDto,
@@ -72,16 +83,14 @@ export class ClinicController {
     @Res() res: Response,
   ) {
     try {
-      const clinic = await this.clinicService.findOne(+id);
+      const clinic = await this.clinicService.findOne(id);
       if (!clinic) {
         return res
           .status(404)
           .json(format_json(404, false, null, null, 'Clinic not found', null));
       }
 
-      const updatedClinic = await this.clinicService.updateClinic(
-        +id,
-        updateClinicDto,
+      const updatedClinic = await this.clinicService.updateClinic(id,updateClinicDto,
       );
       return res
         .status(200)
@@ -95,25 +104,27 @@ export class ClinicController {
             updatedClinic,
           ),
         );
-    } catch (error) {
-      return res
-        .status(400)
-        .json(
-          format_json(
-            400,
-            false,
-            'Bad Request',
-            null,
-            'Failed to update clinic',
-            error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findAll(@Req() req: Request, @Res() res: Response) {
     try {
       const clinics = await this.clinicService.findAll();
@@ -129,32 +140,34 @@ export class ClinicController {
             clinics,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to retrieve clinics',
-            error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator', 'patient', 'doctor', 'guest')
+  @ApiOperation({ summary: 'Detail' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findOne(
     @Param('id') id: string,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     try {
-      const clinic = await this.clinicService.findOne(+id);
+      const clinic = await this.clinicService.findOne(id);
       if (!clinic) {
         return res
           .status(404)
@@ -172,39 +185,41 @@ export class ClinicController {
             clinic,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to retrieve clinic',
-            error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async remove(
     @Param('id') id: string,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     try {
-      const clinic = await this.clinicService.findOne(+id);
+      const clinic = await this.clinicService.findOne(id);
       if (!clinic) {
         return res
           .status(404)
           .json(format_json(404, false, null, null, 'Clinic not found', null));
       }
 
-      await this.clinicService.removeClinic(+id);
+      await this.clinicService.removeClinic(id);
       return res
         .status(200)
         .json(
@@ -217,19 +232,19 @@ export class ClinicController {
             null,
           ),
         );
-    } catch (error) {
-      return res
-        .status(500)
-        .json(
-          format_json(
-            500,
-            false,
-            'Internal Server Error',
-            null,
-            'Failed to delete clinic',
-            error,
-          ),
-        );
-    }
+      } catch (error:any) {
+        return res
+          .status(HttpStatus.INTERNAL_SERVER_ERROR)
+          .json(
+            format_json(
+              500,
+              false,
+              true,
+              null,
+              'Server Error ' + error,
+              error.message,
+            ),
+          );
+      }
   }
 }

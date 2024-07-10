@@ -1,42 +1,104 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { BankCategoryDto } from 'src/dto/bank/bank.category.dto';
-import { UpdateBankCategoryDto } from 'src/dto/bank/update.bank.category.dto';
-import { BankCategory } from 'src/entity/bank/bank.category.entity';
-import { Repository } from 'typeorm';
+import { PrismaService } from 'src/prisma.service';
+import { z, ZodError } from 'zod';
 
 @Injectable()
 export class BankCategoryService {
-  constructor(
-    @InjectRepository(BankCategory)
-    private bankCategoryRepository: Repository<BankCategory>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async createBankCategory(
-    bankCategoryDto: BankCategoryDto,
-  ): Promise<BankCategory> {
-    const bankCategory = this.bankCategoryRepository.create(bankCategoryDto);
-    return this.bankCategoryRepository.save(bankCategory);
+  async createBankCategory(bankCategoryDto: any) {
+    const schema = z.object({
+      category_name: z
+        .string()
+        .max(32)
+        .min(1, { message: 'should not be empty' }),
+      description: z.string().optional(),
+    });
+
+    try {
+      const validatedData = schema.parse(bankCategoryDto);
+      const create = this.prisma.bankCategory.create({
+        data: {
+          category_name: validatedData.category_name,
+          description: validatedData.description,
+        },
+      });
+
+      return create;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
-  async updateBankCategory(
-    id: number,
-    updateBankCategoryDto: UpdateBankCategoryDto,
-  ): Promise<BankCategory> {
-    await this.bankCategoryRepository.update(id, updateBankCategoryDto);
-    return this.bankCategoryRepository.findOne({ where: { id } });
+  async updateBankCategory(id: string, updateBankCategoryDto: any) {
+    const schema = z.object({
+      category_name: z
+        .string()
+        .max(32)
+        .min(1, { message: 'should not be empty' })
+        .optional(),
+      description: z.string().optional(),
+    });
+
+    try {
+      const validatedData = schema.parse(updateBankCategoryDto);
+      const update = this.prisma.bankCategory.update({
+        where: { id: id },
+        data: {
+          category_name: validatedData.category_name,
+          description: validatedData.description,
+        },
+      });
+
+      return update;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
-  async findAll(): Promise<BankCategory[]> {
-    return this.bankCategoryRepository.find();
+  async findOne(id: string) {
+    return await this.prisma.bankCategory.findUnique({
+      where: { id: id },
+    });
   }
 
-  async findOne(id: number): Promise<BankCategory> {
-    return this.bankCategoryRepository.findOne({ where: { id } });
+  async findAll() {
+    return await this.prisma.bankCategory.findMany();
   }
 
-  async removeBankCategory(id: number): Promise<boolean> {
-    const deleteResult = await this.bankCategoryRepository.delete(id);
-    return deleteResult.affected > 0;
+  async removeBankCategory(id: string) {
+    return this.prisma.bankCategory.delete({
+      where: { id: id },
+    });
   }
 }

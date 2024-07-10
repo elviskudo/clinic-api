@@ -1,54 +1,178 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, HttpException } from '@nestjs/common';
+import { PrismaService } from 'src/prisma.service';
 import { PaymentDetailsDto } from 'src/dto/payment/payment.details.dto';
 import { UpdatePaymentDetailsDto } from 'src/dto/payment/update.payment.details.dto';
-import { PaymentDetails } from 'src/entity/payment/payment.details.entity';
-import { Repository } from 'typeorm';
+import { ZodError, z } from 'zod';
 
 @Injectable()
 export class PaymentDetailsService {
-  constructor(
-    @InjectRepository(PaymentDetails)
-    private paymentDetailsRepository: Repository<PaymentDetails>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async createPaymentDetails(
     paymentDetailsDto: PaymentDetailsDto,
-  ): Promise<PaymentDetails> {
-    const paymentDetails =
-      this.paymentDetailsRepository.create(paymentDetailsDto);
-    await this.paymentDetailsRepository.save(paymentDetails);
-    return this.paymentDetailsRepository.findOne({
-      where: { id: paymentDetails.id },
-      relations: ['payment', 'drug', 'fee'],
+  ): Promise<any> {
+    const schema = z.object({
+      payment_id: z.string().min(1),
+      drug_id: z.string().min(1),
+      quantity: z.number().int().nonnegative(),
+      fee_id: z.string().min(1),
     });
+
+    try {
+      const validatedData = schema.parse(paymentDetailsDto);
+
+      const paymentDetails = await this.prisma.paymentDetails.create({
+        data: {
+          payment_id: validatedData.payment_id,
+          drug_id: validatedData.drug_id,
+          quantity: validatedData.quantity,
+          fee_id: validatedData.fee_id,
+        },
+        include: {
+          payment: true,
+          drug: true,
+          fee: true,
+        },
+      });
+
+      return {
+        status: true,
+        message: 'Data successfully created',
+        data: paymentDetails,
+      };
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
   async updatePaymentDetails(
-    id: number,
+    id: string,
     updatePaymentDetailsDto: UpdatePaymentDetailsDto,
-  ): Promise<PaymentDetails> {
-    await this.paymentDetailsRepository.update(id, updatePaymentDetailsDto);
-    return this.paymentDetailsRepository.findOne({
-      where: { id },
-      relations: ['payment', 'drug', 'fee'],
+  ): Promise<any> {
+    const schema = z.object({
+      payment_id: z.string().min(1).optional(),
+      drug_id: z.string().min(1).optional(),
+      quantity: z.number().int().nonnegative().optional(),
+      fee_id: z.string().min(1).optional(),
     });
+
+    try {
+      const validatedData = schema.parse(updatePaymentDetailsDto);
+
+      const update = await this.prisma.paymentDetails.update({
+        where: { id: id },
+        data: validatedData,
+        include: {
+          payment: {
+            include: {
+              bank: true,
+              redeem: true,
+            },
+          },
+          drug: true,
+          fee: true,
+        },
+      });
+
+      return {
+        status: true,
+        message: 'Data successfully updated',
+        data: update,
+      };
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
-  async findOne(id: number): Promise<PaymentDetails> {
-    return this.paymentDetailsRepository.findOne({
-      where: { id },
-      relations: ['payment', 'drug', 'fee'],
+  async findOne(id: string): Promise<any> {
+    const paymentDetails = await this.prisma.paymentDetails.findUnique({
+      where: { id: id },
+      include: {
+        payment: {
+          include: {
+            bank: true,
+            redeem: true,
+          },
+        },
+        drug: true,
+        fee: true,
+      },
     });
+
+    if (!paymentDetails) {
+      throw new HttpException('PaymentDetails not found', 404);
+    }
+
+    return {
+      status: true,
+      message: 'Data found',
+      data: paymentDetails,
+    };
   }
 
-  async findAll(): Promise<PaymentDetails[]> {
-    return this.paymentDetailsRepository.find({
-      relations: ['payment', 'drug', 'fee'],
+  async findAll(): Promise<any> {
+    const paymentDetails = await this.prisma.paymentDetails.findMany({
+      include: {
+        payment: {
+          include: {
+            bank: true,
+            redeem: true,
+          },
+        },
+        drug: true,
+        fee: true,
+      },
     });
+
+    return {
+      status: true,
+      message: 'Data found',
+      data: paymentDetails,
+    };
   }
 
-  async removePaymentDetails(id: number): Promise<void> {
-    await this.paymentDetailsRepository.delete(id);
+  async removePaymentDetails(id: string): Promise<any> {
+    try {
+      await this.prisma.paymentDetails.delete({
+        where: { id: id },
+      });
+
+      return {
+        status: true,
+        message: 'Data successfully deleted',
+      };
+    } catch (e: any) {
+      throw new HttpException('PaymentDetails not found', 404);
+    }
   }
 }

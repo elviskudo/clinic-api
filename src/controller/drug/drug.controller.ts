@@ -13,6 +13,7 @@ import {
   Catch,
   ExceptionFilter,
   ArgumentsHost,
+  UsePipes,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -22,14 +23,20 @@ import { Roles } from 'src/middleware/role.decorator';
 import { DrugDto } from 'src/dto/drug/drug.dto';
 import { UpdateDrugDto } from 'src/dto/drug/update.drug.dto';
 import { DrugService } from 'src/service/drug/drug.service';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Drug')
 @Controller('api/drugs')
 export class DrugController {
   constructor(private readonly drugService: DrugService) {}
 
   @Post()
+  @UsePipes(CustomValidationPipe)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Create' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async create(@Body() drugDto: DrugDto, @Res() res: Response) {
     try {
       const createdDrug = await this.drugService.createDrug(drugDto);
@@ -47,14 +54,14 @@ export class DrugController {
         );
     } catch (error) {
       return res
-        .status(error.getStatus ? error.getStatus() : 400)
+        .status(400)
         .json(
           format_json(
-            error.getStatus ? error.getStatus() : 400,
+            400,
             false,
-            error.getResponse ? error.getResponse()['errors'] : 'Bad Request',
+            'Bad Request',
             null,
-            error.getResponse ? error.getResponse()['message'] : error.message,
+             error,
             null,
           ),
         );
@@ -62,15 +69,18 @@ export class DrugController {
   }
 
   @Put(':id')
+  @UsePipes(CustomValidationPipe)
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update(
     @Param('id') id: string,
     @Body() updateDrugDto: UpdateDrugDto,
     @Res() res: Response,
   ) {
     try {
-      const updatedDrug = await this.drugService.updateDrug(+id, updateDrugDto);
+      const updatedDrug = await this.drugService.updateDrug(id, updateDrugDto);
       return res
         .status(200)
         .json(
@@ -85,16 +95,14 @@ export class DrugController {
         );
     } catch (error) {
       return res
-        .status(error.getStatus ? error.getStatus() : 400)
+        .status(400)
         .json(
           format_json(
-            error.getStatus ? error.getStatus() : 400,
+            400,
             false,
-            error.getResponse ? error.getResponse()['errors'] : 'Bad Request',
+            error,
             null,
-            error.getResponse
-              ? error.getResponse()['message']
-              : 'Failed to update drug',
+            error,
             null,
           ),
         );
@@ -104,6 +112,8 @@ export class DrugController {
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Get' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findAll(@Res() res: Response) {
     try {
       const drugs = await this.drugService.findAll();
@@ -129,7 +139,7 @@ export class DrugController {
             'Internal Server Error',
             null,
             'Failed to retrieve drugs',
-            error.message || error,
+            error || error,
           ),
         );
     }
@@ -138,9 +148,11 @@ export class DrugController {
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Details' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
-      const drug = await this.drugService.findOne(+id);
+      const drug = await this.drugService.findOne(id);
       if (!drug) {
         return res
           .status(404)
@@ -170,7 +182,7 @@ export class DrugController {
             'Internal Server Error',
             null,
             'Failed to retrieve drug',
-            error.message || error,
+            error || error,
           ),
         );
     }
@@ -179,9 +191,11 @@ export class DrugController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
+  @ApiOperation({ summary: 'Delete' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
-      await this.drugService.removeDrug(+id);
+      await this.drugService.removeDrug(id);
       return res
         .status(200)
         .json(
@@ -197,7 +211,7 @@ export class DrugController {
             'Internal Server Error',
             null,
             'Failed to delete drug',
-            error.message || error,
+            error || error,
           ),
         );
     }

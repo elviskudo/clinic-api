@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BankController } from '../../controller/bank/bank.controller';
-import { Bank } from '../../entity/bank/bank.entity';
 import { BankService } from 'src/service/bank/bank.service';
-import { User } from 'src/entity/profile/user.entity';
-import { Role } from 'src/entity/role.entity';
+import { PrismaModule } from 'src/prisma.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Bank, User, Role])],
+  imports: [PrismaModule],
   controllers: [BankController],
   providers: [BankService],
 })

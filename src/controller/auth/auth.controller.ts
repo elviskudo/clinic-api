@@ -5,33 +5,34 @@ import {
   Req,
   UseGuards,
   UploadedFile,
+  UsePipes,
+  Res,
   Get,
   Put,
-  Res,
-  HttpStatus,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthDTO } from 'src/dto/auth/auth.dto';
-import { SignInDto } from 'src/dto/auth/signin.dto';
-import { VerifikasiDTO } from 'src/dto/auth/verifikasi.dto';
 import { format_json } from 'src/env';
-import { AuthService } from 'src/service/auth/auth.service';
-import { mailService } from 'src/service/mailer/mailer.service';
-import { AuthGuard } from '@nestjs/passport';
-import { ProfileDto } from 'src/dto/auth/profile.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { UseInterceptors } from '@nestjs/common/decorators/core/use-interceptors.decorator';
-import { v4 as uuidv4 } from 'uuid';
-import { ChangePassDTO } from 'src/dto/auth/change.pass.dto';
 import { v2 as cloudinary } from 'cloudinary';
 import path, { basename, extname } from 'path';
 import { diskStorage } from 'multer';
-import { GoogleOauthGuard } from 'src/middleware/google.auth.guards';
 import { Response } from 'express';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
+import { AuthenticationService } from 'src/service/auth/authentication.service';
+import { VerifikasiDTO } from 'src/dto/auth/verifikasi.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { ProfileService } from 'src/service/auth/profile.service';
+import { ProfileDto } from 'src/dto/auth/profile.dto';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
+import { Updateavatar } from 'src/dto/auth/updateavatar.dto';
+import { ChangePassDTO } from 'src/dto/auth/change.pass.dto';
 
 export function generateRandomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
 const storage = diskStorage({
   destination: './uploads',
   filename: (req, file, cb) => {
@@ -40,102 +41,49 @@ const storage = diskStorage({
   },
 });
 
+@ApiTags('Auth')
 @Controller('api')
 export class AuthController {
   constructor(
-    private readonly authService: AuthService,
-    private readonly mailService: mailService,
+    private readonly AuthenticationService: AuthenticationService,
+    private readonly profileService: ProfileService,
   ) {}
 
   @Post('auth/register')
-  async register(@Body() authDTO: AuthDTO, @Res() res: Response) {
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Register' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  async register(
+    @Body() authDTO: AuthDTO,
+    @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
+  ) {
     try {
       const { fullname, email, phone_number, password } = authDTO;
-      const user = await this.authService.register(
-        fullname,
-        email,
-        phone_number,
-        password,
-      );
+      const user = await this.AuthenticationService.register(authDTO);
       if (user.status == true) {
-        const code = generateRandomNumber(100000, 999999);
-        const checkotp = this.authService.checkotp(code);
-        let otp;
-        if (checkotp) {
-          otp = code;
-        } else {
-          otp = generateRandomNumber(100000, 999999);
-        }
-        const sendemail = this.mailService.sendMail(
-          email,
-          'Verifikasi email',
-          otp,
-          fullname,
-        );
-        const saveotp = await this.authService.saveOtp(otp, user.users.id, 0);
         return res.status(200).json(
-          format_json(200, true, false, null, 'User signed up successfully', {
-            user: user.users,
-            token: user.token,
-          }),
+          format_json(200, true, false, null, 'User signed up successfully', user.users),
         );
       } else {
         return res
           .status(400)
-          .json(format_json(400, false, true, null, user.message, null));
+          .json(format_json(400, false, true, user.errors, user.message, null));
       }
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
-    }
-  }
-
-  @Post('auth/signin')
-  async signIn(@Body() signInDto: SignInDto, @Res() res: Response) {
-    const { email, password } = signInDto;
-    const token = await this.authService.signIn(email, password);
-
-    if (token.status) {
-      if (token.users.verifikasi == true) {
-        return res.status(200).json(
-          format_json(200, true, false, null, 'User signed in successfully', {
-            user: token.users,
-            token: token.token,
-          }),
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
         );
-      } else {
-        const code = generateRandomNumber(100000, 999999);
-        const checkotp = this.authService.checkotp(code);
-        let otp;
-        if (checkotp) {
-          otp = code;
-        } else {
-          otp = generateRandomNumber(100000, 999999);
-        }
-        const sendemail = this.mailService.sendMail(
-          email,
-          'Verifikasi email',
-          otp,
-          token.users.email,
-        );
-        const saveotp = await this.authService.saveOtp(otp, token.users.id, 0);
-        return res.status(200).json(
-          format_json(200, true, false, null, 'Silakan verifikasi email anda', {
-            user: token.users,
-            token: token.token,
-          }),
-        );
-      }
-    } else {
-      return res
-        .status(400)
-        .json(format_json(400, false, null, null, token.message, null));
     }
   }
 
   @Post('auth/verification')
   @UseGuards(AuthGuard('jwt'))
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Verifikasi akun' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async verifikasiEmail(
     @Body() verifikasiDTO: VerifikasiDTO,
     @Req() req: Request,
@@ -176,30 +124,314 @@ export class AuthController {
             ),
           );
       }
-      const verifikasiotp = await this.authService.verifikasi(kode_otp, token);
+      const verifikasiotp = await this.AuthenticationService.verifikasi(
+        verifikasiDTO,
+        token,
+      );
       if (verifikasiotp.status == true) {
         return res.status(200).json(
-          format_json(200, true, null, null, verifikasiotp.message, {
-            user: verifikasiotp.users,
-            token: verifikasiotp.token,
-          }),
+          format_json(200, true, null, null, verifikasiotp.message, verifikasiotp.users),
         );
       } else {
         return res
           .status(400)
           .json(
-            format_json(400, false, null, null, verifikasiotp.message, null),
+            format_json(
+              400,
+              false,
+              null,
+              verifikasiotp.errors,
+              verifikasiotp.message,
+              null,
+            ),
           );
       }
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
+        );
+    }
+  }
+
+  @Get('auth/personal-data')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Get personal data' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  async getpersonaldata(@Req() req: Request, @Res() res: Response) {
+    try {
+      const authorizationHeader = req.headers['authorization'];
+
+      if (!authorizationHeader) {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Authorization header is missing',
+              null,
+            ),
+          );
+      }
+
+      const token = authorizationHeader.split(' ')[1];
+
+      if (!token) {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Bearer token is missing',
+              null,
+            ),
+          );
+      }
+      const getprofile = await this.profileService.findprofile(token);
+      if (getprofile.status == true) {
+        return res
+          .status(200)
+          .json(
+            format_json(
+              200,
+              true,
+              null,
+              null,
+              getprofile.message,
+              getprofile.users,
+            ),
+          );
+      } else {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              getprofile.errors,
+              null,
+              getprofile.message,
+              null,
+            ),
+          );
+      }
+    } catch (error: any) {
+      return res
+        .status(400)
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
+        );
+    }
+  }
+
+  @Put('auth/personal-data')
+  @UseGuards(AuthGuard('jwt'))
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Update personal data' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  async updatepersonaldata(
+    @Body() ProfileDTO: ProfileDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    try {
+      const authorizationHeader = req.headers['authorization'];
+
+      if (!authorizationHeader) {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Authorization header is missing',
+              null,
+            ),
+          );
+      }
+
+      const token = authorizationHeader.split(' ')[1];
+
+      if (!token) {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Bearer token is missing',
+              null,
+            ),
+          );
+      }
+
+      const dataprofile = {
+        fullname: ProfileDTO.fullname,
+        phone_number: ProfileDTO.phone_number,
+        no_identity: ProfileDTO.no_identity,
+        birth_date: ProfileDTO.birth_date,
+        birth_place: ProfileDTO.birth_place,
+        address: ProfileDTO.address,
+        gender: ProfileDTO.gender,
+        work_in: ProfileDTO.work_in,
+        blood_type: ProfileDTO.blood_type,
+        marital_status: ProfileDTO.marital_status,
+        nationality: ProfileDTO.nationality,
+        religion: ProfileDTO.religion,
+        city_id: ProfileDTO.city_id,
+        neighborhoodNo: ProfileDTO.neighborhoodNo,
+        citizen_no: ProfileDTO.citizen_no,
+        area_code: ProfileDTO.area_code,
+        responsibleForCosts: ProfileDTO.responsibleForCosts,
+      };
+
+      const getprofile = await this.profileService.updatecreate(
+        dataprofile,
+        token,
+      );
+      if (getprofile.status == true) {
+        return res
+          .status(200)
+          .json(
+            format_json(
+              200,
+              true,
+              null,
+              null,
+              getprofile.message,
+              getprofile.users,
+            ),
+          );
+      } else {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              getprofile.errors,
+              null,
+              getprofile.message,
+              null,
+            ),
+          );
+      }
+    } catch (error: any) {
+      return res
+        .status(400)
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
+        );
+    }
+  }
+
+  @Post('auth/signin')
+  @ApiOperation({ summary: 'Sign in' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  async signin(@Body() authDTO: AuthDTO, @Res() res: Response) {
+    try {
+      const user = await this.AuthenticationService.signin(authDTO);
+      if (user.status) {
+        return res.status(200).json(
+          format_json(200, true, false, null, 'User signed in successfully', user.users),
+        );
+      } else {
+        return res
+          .status(400)
+          .json(format_json(400, false, true, null, user.message, null));
+      }
+    } catch (error: any) {
+      return res
+        .status(400)
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
+        );
+    }
+  }
+
+  @Post('auth/signout')
+  @ApiOperation({ summary: 'Sign out' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  async signout(@Req() req: Request, @Res() res: Response) {
+    try {
+      const authorizationHeader = req.headers['authorization'];
+
+      if (!authorizationHeader) {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Authorization header is missing',
+              null,
+            ),
+          );
+      }
+
+      const token = authorizationHeader.split(' ')[1];
+
+      if (!token) {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Bearer token is missing',
+              null,
+            ),
+          );
+      }
+      
+      const user = await this.AuthenticationService.signout(token);
+      if (user.status) {
+        return res
+          .status(200)
+          .json(
+            format_json(
+              200,
+              true,
+              false,
+              null,
+              'User signed out successfully',
+              null,
+            ),
+          );
+      } else {
+        return res
+          .status(400)
+          .json(format_json(400, false, true, null, user.message, null));
+      }
+    } catch (error: any) {
+      return res
+        .status(400)
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
+        );
     }
   }
 
   @Post('auth/resend')
   @UseGuards(AuthGuard('jwt'))
+  @UsePipes(CustomValidationPipe)
+  @ApiOperation({ summary: 'Resend' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async resendOTP(@Req() req: Request, @Res() res: Response) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -236,176 +468,33 @@ export class AuthController {
           );
       }
 
-      const code = generateRandomNumber(100000, 999999);
-      const checkotp = this.authService.checkotp(code);
-      let otp;
-      if (checkotp) {
-        otp = code;
-      } else {
-        otp = generateRandomNumber(100000, 999999);
-      }
-
-      const resendotp = await this.authService.resendotp(token, otp);
+      const resendotp = await this.AuthenticationService.resendotp(token);
       if (resendotp.status == true) {
         return res.status(200).json(
-          format_json(200, true, null, null, resendotp.message, {
-            user: resendotp.users,
-            token: resendotp.token,
-          }),
+          format_json(200, true, null, null, resendotp.message, resendotp.users),
         );
       } else {
         return res
           .status(400)
           .json(format_json(400, false, null, null, resendotp.message, null));
       }
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
-    }
-  }
-
-  @Get('users/profiles')
-  @UseGuards(AuthGuard('jwt'))
-  async get_profile(@Req() req: Request, @Res() res: Response) {
-    try {
-      const authorizationHeader = req.headers['authorization'];
-
-      if (!authorizationHeader) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Authorization header is missing',
-              null,
-            ),
-          );
-      }
-
-      const token = authorizationHeader.split(' ')[1];
-
-      if (!token) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Bearer token is missing',
-              null,
-            ),
-          );
-      }
-
-      const getprofile = this.authService.profile(token);
-
-      if ((await getprofile).status === true) {
-        return res.status(200).json(
-          format_json(200, true, null, null, (await getprofile).message, {
-            user: (await getprofile).users,
-            token: (await getprofile).token,
-          }),
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
         );
-      } else {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              (await getprofile).message,
-              null,
-            ),
-          );
-      }
-    } catch (error) {
-      return res
-        .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
-    }
-  }
-
-  @Get('users/personal-data')
-  @UseGuards(AuthGuard('jwt'))
-  async get_personaldata(@Req() req: Request, @Res() res: Response) {
-    try {
-      const authorizationHeader = req.headers['authorization'];
-
-      if (!authorizationHeader) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Authorization header is missing',
-              null,
-            ),
-          );
-      }
-
-      const token = authorizationHeader.split(' ')[1];
-
-      if (!token) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Bearer token is missing',
-              null,
-            ),
-          );
-      }
-
-      const getpersonaldata = this.authService.personal_data(token);
-
-      if ((await getpersonaldata).status === true) {
-        return res.status(200).json(
-          format_json(200, true, null, null, (await getpersonaldata).message, {
-            user: (await getpersonaldata).users.checkprofile,
-            verifikasi: (await getpersonaldata).users.verifikasi,
-            token: (await getpersonaldata).token,
-          }),
-        );
-      } else {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              (await getpersonaldata).message,
-              null,
-            ),
-          );
-      }
-    } catch (error) {
-      return res
-        .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
     }
   }
 
   @Put('users/update/avatar')
   @UseGuards(AuthGuard('jwt'))
+  @UsePipes(CustomValidationPipe)
   @UseInterceptors(FileInterceptor('profil_image', { storage }))
+  @ApiOperation({ summary: 'Update avatar' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async update_avatar(
+    @Body() update_avatar : Updateavatar,
     @Req() req: Request,
     @UploadedFile() profil_image: Express.Multer.File,
     @Res() res: Response,
@@ -461,6 +550,10 @@ export class AuthController {
           { public_id: get_name_file },
         );
         var get_url_profile = uploadResult.secure_url;
+
+        const filePath = profil_image.path;
+        fs.unlinkSync(path.resolve(filePath));
+        
       } catch (error) {
         console.error(error);
         console.error(profil_image);
@@ -470,17 +563,14 @@ export class AuthController {
           'https://api.dicebear.com/8.x/adventurer/svg?seed=' + publicId;
       }
 
-      const updateProfile = this.authService.update_avatar(
+      const updateProfile = this.profileService.update_avatar(
         token,
         get_url_profile,
       );
 
       if ((await updateProfile).status == true) {
         return res.status(200).json(
-          format_json(200, true, null, null, (await updateProfile).message, {
-            user: (await updateProfile).users,
-            token: (await updateProfile).token,
-          }),
+          format_json(200, true, null, null, (await updateProfile).message, (await updateProfile).users),
         );
       } else {
         return res
@@ -496,109 +586,17 @@ export class AuthController {
             ),
           );
       }
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
-    }
-  }
-
-  @Put('users/personal-data')
-  @UseGuards(AuthGuard('jwt'))
-  async update_profile(
-    @Body() profileDTO: ProfileDto,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
-    try {
-      const authorizationHeader = req.headers['authorization'];
-
-      if (!authorizationHeader) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Authorization header is missing',
-              null,
-            ),
-          );
-      }
-
-      const token = authorizationHeader.split(' ')[1];
-
-      if (!token) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Bearer token is missing',
-              null,
-            ),
-          );
-      }
-
-      const profile = {
-        fullname: profileDTO.fullname,
-        phone_number: profileDTO.phone_number,
-        no_identity: profileDTO.no_identity,
-        birth_date: profileDTO.birth_date,
-        birth_place: profileDTO.birth_place,
-        address: profileDTO.address,
-        gender: profileDTO.gender,
-        work_in: profileDTO.work_in,
-        blood_type: profileDTO.blood_type,
-        marital_status: profileDTO.marital_status,
-        nationality: profileDTO.nationality,
-        religion: profileDTO.religion,
-        city_id: profileDTO.city_id,
-        neighborhood_no: profileDTO.neighborhood_no,
-        citizen_no: profileDTO.citizen_no,
-        area_code: profileDTO.area_code,
-        responsible_for_costs: profileDTO.responsible_for_costs,
-      };
-
-      const updateProfile = await this.authService.update_profile(
-        token,
-        profile,
-      );
-      if ((await updateProfile).status == true) {
-        return res.status(200).json(
-          format_json(200, true, null, null, (await updateProfile).message, {
-            user: (await updateProfile).users,
-            verifikasi: (await updateProfile).verifikasi,
-            token: (await updateProfile).token,
-          }),
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
         );
-      } else {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              (await updateProfile).message,
-              null,
-            ),
-          );
-      }
-    } catch (error) {
-      return res
-        .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
     }
   }
 
   @Post('users/change-password')
+  @UsePipes(CustomValidationPipe)
   @UseGuards(AuthGuard('jwt'))
   async change_password(
     @Body() ChangePassDTO: ChangePassDTO,
@@ -642,14 +640,11 @@ export class AuthController {
 
       const { password, confirmPassword } = ChangePassDTO;
 
-      const change_password = this.authService.change_pass(token, password);
+      const change_password = this.AuthenticationService.change_pass(token, password);
 
       if ((await change_password).status === true) {
         return res.status(200).json(
-          format_json(200, true, null, null, (await change_password).message, {
-            user: (await change_password).users,
-            token: (await change_password).token,
-          }),
+          format_json(200, true, null, null, (await change_password).message, (await change_password).users),
         );
       } else {
         return res
@@ -665,77 +660,12 @@ export class AuthController {
             ),
           );
       }
-    } catch (error) {
+    } catch (error: any) {
       return res
         .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
-    }
-  }
-
-  @Get('auth/google')
-  @UseGuards(GoogleOauthGuard)
-  async auth() {}
-
-  @Get('auth/google-callback')
-  @UseGuards(GoogleOauthGuard)
-  async googleAuthCallback(@Req() req, @Res() res: Response) {
-    const token = await this.authService.google_auth(req.user);
-
-    return res.status(200).json(
-      format_json(200, true, null, null, token.message, {
-        user: token.users,
-        token: token.token,
-      }),
-    );
-  }
-
-  @Post('users/logout')
-  @UseGuards(AuthGuard('jwt'))
-  async delete(@Req() req: Request, @Res() res: Response) {
-    try {
-      const authorizationHeader = req.headers['authorization'];
-
-      if (!authorizationHeader) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Authorization header is missing',
-              null,
-            ),
-          );
-      }
-
-      const token = authorizationHeader.split(' ')[1];
-
-      if (!token) {
-        return res
-          .status(400)
-          .json(
-            format_json(
-              400,
-              false,
-              null,
-              null,
-              'Bearer token is missing',
-              null,
-            ),
-          );
-      }
-
-      const logout = this.authService.addToBlacklist(token);
-
-      return res
-        .status(200)
-        .json(format_json(200, true, null, null, 'Success logout', null));
-    } catch (error) {
-      return res
-        .status(400)
-        .json(format_json(400, false, true, null, 'Server Error '+error.message, error));
+        .json(
+          format_json(400, false, true, null, 'Server Error ', error.message),
+        );
     }
   }
 }

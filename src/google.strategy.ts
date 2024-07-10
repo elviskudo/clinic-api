@@ -4,12 +4,12 @@ import { PassportStrategy } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Strategy, VerifyCallback } from 'passport-google-oauth2';
-import { User } from './entity/profile/user.entity';
+import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(
-    @InjectRepository(User) private userRepository: Repository<User>,
+    private prisma: PrismaService
   ) {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID,

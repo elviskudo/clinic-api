@@ -2,51 +2,46 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as jwt from 'jsonwebtoken';
-import { Feedback } from 'src/entity/feedback.entity';
 import { FeedbackDTO } from 'src/dto/feedback.dto';
-
+import { PrismaService } from 'src/prisma.service';
+import { ZodError, z } from 'zod';
 
 @Injectable()
 export class FeedbackService {
   constructor(
-    @InjectRepository(Feedback)
-    private readonly feedbackReposity: Repository<Feedback>,
+    private prisma: PrismaService
   ) {}
 
   async getdata(token: string) {
-    const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+    try {
+      const find = await this.prisma.feedback.findMany({
+        include : {
+          user: true
+        }
+      })
 
-    if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
-      const userId = extracttoken.userId;
+      return {
+        status: true,
+        message: 'Success to get data',
+        data: find,
+      };
 
-      const feedback = await this.feedbackReposity.find({
-        relations: ['profile']
-      });
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
 
-      if (feedback.length > 0) {
-
-        const result = feedback.map(feedback => ({
-            user_id : feedback.user_id,
-            user : feedback.profile,
-            content : feedback.content
-          }));
-
-        return {
-          status: true,
-          message: 'Success to get data',
-          data: result,
-        };
-      } else {
         return {
           status: false,
-          message: 'No feedback records found for this user',
-          data: null,
+          message: 'Validasi gagal',
+          data: errorMessages,
         };
       }
-    } else {
       return {
         status: false,
-        message: 'Invalid token',
+        message: e.message || 'Terjadi kesalahan',
         data: null,
       };
     }
@@ -54,46 +49,53 @@ export class FeedbackService {
 
 
   async create(token: string, data: FeedbackDTO) {
+    const schema = z.object({
+      content: z.string().min(1),
+    });
     try {
-        const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
-        if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
-      
-      const userId = extracttoken.userId;
-      
-      const create = this.feedbackReposity.create({
-        user_id: userId,
-        content: data.content
-      });
+      const validatedData = schema.parse(data);
+      const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+      if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
+        var userId = extracttoken.userId;
+      }
+      const create = await this.prisma.feedback.create({
+        data  : {
+          user: {
+            connect : {
+              id : userId
+            }
+          },
+          content: validatedData.content,
+        },
+        include : {
+          user: true
+        }
+      })
 
-      const saved = await this.feedbackReposity.save(create);
+      return {
+        status: true,
+        message: 'Success to create data',
+        data: create,
+      };
 
-      
-      if (saved) {
-        const getfeedback = await this.feedbackReposity.findOne({
-          where: { id: create.id },
-          relations: ['profile']
-        });
-        return {
-          status: true,
-          message: 'Data successfully created',
-          data: getfeedback,
-        };
-      } else {
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
         return {
           status: false,
-          message: 'Data tidak bisa di gunakan',
-          data: null,
+          message: 'Validasi gagal',
+          data: errorMessages,
         };
       }
-    } else {
-        return {
-          status: false,
-          message: 'Invalid token',
-          data: null,
-        };
-    }
-    } catch (error) {
-      return { status: false, message: error.message, data: null };
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+        data: null,
+      };
     }
 }
 

@@ -1,11 +1,15 @@
-import { IsInt, IsDate, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class approvaltokenDTO {
     
-    @IsInt()
-    doctor_id: number;
+    @IsNotEmpty({ message: 'should not be empty' })
+    @ApiProperty()
+    code: string;
 
-    @IsString()
+    @IsNotEmpty({ message: 'Tidak boleh kosong' })
+    @ApiProperty()
+    @IsBoolean()
     approval: boolean;
 }

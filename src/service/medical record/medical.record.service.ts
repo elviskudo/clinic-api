@@ -1,91 +1,221 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
-import { Record } from 'src/entity/latest/record.entity';
+import { PrismaService } from 'src/prisma.service';
+import { ZodError, z } from 'zod';
 import { MedicalRecordDto } from 'src/dto/medical record/medical.record.dto';
-import { UpdateMedicalRecordDto } from 'src/dto/medical record/update.medical.record.dto';
-import { RecordResponseDto } from 'src/dto/medical record/medical.record.response.dto';
 
 @Injectable()
 export class MedicalRecordService {
-  constructor(
-    @InjectRepository(Record)
-    private medicalRecordRepository: Repository<Record>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async createRecord(
-    medicalRecordDto: MedicalRecordDto,
-  ): Promise<RecordResponseDto> {
-    const record = this.medicalRecordRepository.create(medicalRecordDto);
-    await this.medicalRecordRepository.save(record);
-    const savedRecord = await this.medicalRecordRepository.findOne({
-      where: { id: record.id },
-      relations: ['poly', 'clinic', 'doctor', 'user'],
+  async createRecord(medicalRecordDto: MedicalRecordDto) {
+    const schema = z.object({
+      consultation_date_time: z.string().datetime(),
+      way_to_come: z.string().min(1),
+      vistting_time: z.string().datetime(),
+      transportation: z.string().min(1),
+      reference: z.string().min(1),
+      person_responsible: z.string().min(1),
+      traumatic: z.string().min(1),
+      non_traumatic: z.string().min(1),
+      conditions: z.string().min(1),
+      complaint: z.string().min(1),
+      history_of_illness: z.string().min(1),
+      solution: z.string().min(1),
+      user_id: z.string().min(1),
+      poly_id: z.string().min(1),
+      clinic_id: z.string().min(1),
+      doctor_id: z.string().min(1),
+      wilayah_id: z.bigint().optional(),
     });
 
-    return this.toRecordResponseDto(savedRecord);
+    try {
+      const validatedData = schema.parse(medicalRecordDto);
+      const create = await this.prisma.record.create({
+        data: {
+          consultation_date_time: new Date(
+            validatedData.consultation_date_time,
+          ),
+          way_to_come: validatedData.way_to_come,
+          vistting_time: new Date(validatedData.vistting_time),
+          transportation: validatedData.transportation,
+          reference: validatedData.reference,
+          person_responsible: validatedData.person_responsible,
+          traumatic: validatedData.traumatic,
+          non_traumatic: validatedData.non_traumatic,
+          conditions: validatedData.conditions,
+          complaint: validatedData.complaint,
+          history_of_illness: validatedData.history_of_illness,
+          solution: validatedData.solution,
+          user: {
+            connect: {
+              id: validatedData.user_id,
+            },
+          },
+          poly: {
+            connect: {
+              id: validatedData.poly_id,
+            },
+          },
+          clinic: {
+            connect: {
+              id: validatedData.clinic_id,
+            },
+          },
+          doctor: {
+            connect: {
+              id: validatedData.doctor_id,
+            },
+          },
+        },
+        include: {
+          poly: {
+            include: {
+              clinic: true,
+            },
+          },
+        },
+      });
+
+      return create;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
-  async updateRecord(
-    id: number,
-    updateMedicalRecordDto: UpdateMedicalRecordDto,
-  ): Promise<RecordResponseDto> {
-    await this.medicalRecordRepository.update(id, updateMedicalRecordDto);
-    const updatedRecord = await this.medicalRecordRepository.findOne({
-      where: { id },
-      relations: ['poly', 'clinic', 'doctor', 'user'],
+  async updateRecord(id: string, medicalRecordDto: MedicalRecordDto) {
+    const schema = z.object({
+      consultation_date_time: z.string().datetime(),
+      way_to_come: z.string().min(1),
+      vistting_time: z.string().datetime(),
+      transportation: z.string().min(1),
+      reference: z.string().min(1),
+      person_responsible: z.string().min(1),
+      traumatic: z.string().min(1),
+      non_traumatic: z.string().min(1),
+      conditions: z.string().min(1),
+      complaint: z.string().min(1),
+      history_of_illness: z.string().min(1),
+      solution: z.string().min(1),
+      user_id: z.string().min(1),
+      poly_id: z.string().min(1),
+      clinic_id: z.string().min(1),
+      doctor_id: z.string().min(1),
+      wilayah_id: z.bigint().optional(),
     });
 
-    return this.toRecordResponseDto(updatedRecord);
+    try {
+      const validatedData = schema.parse(medicalRecordDto);
+      const update = await this.prisma.record.update({
+        where: { id: id },
+        data: {
+          consultation_date_time: new Date(
+            validatedData.consultation_date_time,
+          ),
+          way_to_come: validatedData.way_to_come,
+          vistting_time: new Date(validatedData.vistting_time),
+          transportation: validatedData.transportation,
+          reference: validatedData.reference,
+          person_responsible: validatedData.person_responsible,
+          traumatic: validatedData.traumatic,
+          non_traumatic: validatedData.non_traumatic,
+          conditions: validatedData.conditions,
+          complaint: validatedData.complaint,
+          history_of_illness: validatedData.history_of_illness,
+          solution: validatedData.solution,
+          user: {
+            connect: {
+              id: validatedData.user_id,
+            },
+          },
+          poly: {
+            connect: {
+              id: validatedData.poly_id,
+            },
+          },
+          clinic: {
+            connect: {
+              id: validatedData.clinic_id,
+            },
+          },
+          doctor: {
+            connect: {
+              id: validatedData.doctor_id,
+            },
+          },
+        },
+        include: {
+          poly: {
+            include: {
+              clinic: true,
+            },
+          },
+        },
+      });
+
+      return update;
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
+      }
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
+    }
   }
 
-  async findOne(id: number): Promise<RecordResponseDto> {
-    const record = await this.medicalRecordRepository.findOne({
-      where: { id },
-      relations: ['poly', 'clinic', 'doctor', 'user'],
-    });
-
-    return this.toRecordResponseDto(record);
-  }
-
-  async findAll(): Promise<RecordResponseDto[]> {
-    const records = await this.medicalRecordRepository.find({
-      relations: ['poly', 'clinic', 'doctor', 'user'],
-    });
-
-    return records.map((record) => this.toRecordResponseDto(record));
-  }
-
-  async removeRecord(id: number): Promise<void> {
-    await this.medicalRecordRepository.delete(id);
-  }
-
-  private toRecordResponseDto(record: Record): RecordResponseDto {
-    return {
-      id: record.id,
-      consultation_date_time: record.consultation_date_time,
-      way_to_come: record.way_to_come,
-      visiting_time: record.vistting_time,
-      transportation: record.transportation,
-      reference: record.reference,
-      person_responsible: record.person_responsible,
-      traumatic: record.traumatic,
-      non_traumatic: record.non_traumatic,
-      conditions: record.conditions,
-      complaint: record.complaint,
-      history_of_illness: record.history_of_illness,
-      solution: record.solution,
-      user_id: record.user_id,
-      user: {
-        phone_number: record.user?.phone_number,
-        email: record.user?.email,
+  async findOne(id: string) {
+    return await this.prisma.record.findUnique({
+      where: { id: id },
+      include: {
+        poly: {
+          include: {
+            clinic: true,
+          },
+        },
       },
-      poly_id: record.poly_id,
-      poly: { name: record.poly?.name },
-      clinic_id: record.clinic_id,
-      clinic: { clinic_name: record.clinic?.clinic_name },
-      doctor_id: record.doctor_id,
-      doctor: { doctor_name: record.doctor?.doctor_name },
-    };
+    });
+  }
+
+  async findAll() {
+    return await this.prisma.record.findMany({
+      include: {
+        poly: {
+          include: {
+            clinic: true,
+          },
+        },
+      },
+    });
+  }
+
+  async removeRecord(id: string) {
+    return await this.prisma.record.delete({
+      where: { id: id },
+    });
   }
 }

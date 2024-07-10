@@ -1,66 +1,172 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Term } from 'src/entity/term/term.entity';
 import { TermDto } from 'src/dto/term/term.dto';
 import { UpdateTermDto } from 'src/dto/term/update.term.dto';
-import { Ticket } from 'src/entity/term/ticket.entity';
 import { TicketDto } from 'src/dto/term/ticket.dto';
-import { AuthService } from '../auth/auth.service';
+import { PrismaService } from 'src/prisma.service';
+import { ZodError, z } from 'zod';
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class TermService {
   constructor(
-    @InjectRepository(Term)
-    private readonly termRepository: Repository<Term>,
-    @InjectRepository(Ticket)
-    private readonly ticketRepository: Repository<Ticket>,
-    private readonly authService: AuthService,
+    private prisma: PrismaService
   ) {}
 
-  async createTerm(termDto: TermDto): Promise<Term> {
-    const term = this.termRepository.create(termDto);
-    return this.termRepository.save(term);
+  async createTerm(termDto: TermDto) {
+    const schema = z.object({
+      term_category_id: z.string().min(1),
+      title: z.string().min(1),
+      content: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(termDto);
+      const create = await this.prisma.term.create({
+        data  : {
+          term_category: {
+            connect: {
+              id: validatedData.term_category_id
+            }
+          },
+          title: validatedData.title,
+          content: validatedData.content,
+          },
+          include: {
+            term_category: true
+          }
+        })
+
+      return create;
+
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
   }
 
-  async updateTerm(id: number, updateTermDto: UpdateTermDto): Promise<Term> {
-    await this.termRepository.update(id, updateTermDto);
-    return this.termRepository.findOne({
-      where: { id },
-      relations: ['term_category'],
+  async updateTerm(id: string, updateTermDto: UpdateTermDto) {
+    const schema = z.object({
+      term_category_id: z.string().min(1),
+      title: z.string().min(1),
+      content: z.string().min(1),
+    });
+
+    try {
+      const validatedData = schema.parse(updateTermDto);
+      const update = await this.prisma.term.update({
+        where: { id: id},
+        data  : {
+          term_category: {
+            connect: {
+              id: validatedData.term_category_id
+            }
+          },
+          title: validatedData.title,
+          content: validatedData.content,
+          },
+          include: {
+            term_category: true
+          }
+        })
+
+      return update;
+
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
+  }
+
+  async findAll() {
+    return await this.prisma.term.findMany({
+      include: {
+        term_category: true
+      }
     });
   }
 
-  async findAll(): Promise<Term[]> {
-    return this.termRepository.find({ relations: ['term_category'] });
-  }
-
-  async findOne(id: number): Promise<Term> {
-    return this.termRepository.findOne({
-      where: { id },
-      relations: ['term_category'],
+  async findOne(id: string) {
+    return await this.prisma.term.findUnique({
+      where: {id : id},
+      include: {
+        term_category: true
+      }
     });
   }
 
-  async removeTerm(id: number): Promise<void> {
-    await this.termRepository.delete(id);
+  async removeTerm(id: string) {
+    return await this.prisma.term.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 
-  async sendTicket(ticketDto: TicketDto, userId: number): Promise<Ticket> {
-    const { title, content } = ticketDto;
+  async sendTicket(ticketDto: TicketDto, token: string) {
+    const schema = z.object({
+      email: z.string().min(1),
+      title: z.string().min(1),
+      content: z.string().min(1),
+    });
 
-    const user = await this.authService.getAuthById(userId);
+    try {
+      const validatedData = schema.parse(ticketDto);
+      const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
+      if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
+        var userId = extracttoken.userId;
+      }
+      const create = await this.prisma.ticket.create({
+        data  : {
+          user: {
+            connect: {
+              id: userId
+            }
+          },
+          title: validatedData.title,
+          content: validatedData.content,
+          email: validatedData.email
+          },
+          include: {
+            user: true
+          }
+        })
 
-    const ticket = new Ticket();
-    ticket.user_id = user.id;
-    ticket.email = user.email;
-    ticket.title = title;
-    ticket.content = content;
+      return create;
 
-    return this.ticketRepository.save(ticket);
+    } catch (e: any) {
+      if (e instanceof ZodError) {
+        const errorMessages = e.errors.map((error) => ({
+          field: error.path.join('.'),
+          message: error.message,
+        }));
+
+        return errorMessages;
+      }
+      return e.message || 'Terjadi kesalahan';
+    }
   }
 
-  async findAllTickets(): Promise<Ticket[]> {
-    return this.ticketRepository.find();
+  async findAllTickets() {
+    return await this.prisma.ticket.findMany({
+      include: {
+        user: true
+      }
+    });
   }
 }

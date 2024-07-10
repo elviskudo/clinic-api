@@ -1,44 +1,85 @@
-import { IsInt, IsString, IsDate, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsString, IsDate, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class DoctorDto {
-  @IsInt()
-  id: number;
 
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   doctor_name: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  place_of_birth:string;
+
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  date_of_birth: Date;
+
+  @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  specialist: String
+
+  @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  bio: String
+
+  @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  graduate_of: String
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   description: string;
 
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   address: string;
 
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   post_code: string;
 
-  @IsInt()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   latitude: number;
 
-  @IsInt()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   longitude: number;
 
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   title: string;
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   experience: string;
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
   education: string;
 
-  @IsInt()
-  poly_id: number;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  poly_id: string;
 
-  @IsInt()
-  wilayah_id: number;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  wilayah_id: BigInt;
 
   poly: {
     id: number;

@@ -1,16 +1,24 @@
-import { Controller, Patch, Body, Req, UseGuards } from '@nestjs/common';
+import { Controller, Patch, Body, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { CustomValidationPipe } from 'src/custom-validation.pipe';
 import { format_json } from 'src/env';
 import { ProfileConfigurationService } from 'src/service/profile_config/profile.config.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { RolesGuard } from 'src/middleware/role.guard';
 
+@ApiTags('Profile configuration')
 @Controller('api/settings')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class SettingsController {
   constructor(
     private readonly profileConfigService: ProfileConfigurationService,
   ) {}
 
   @Patch('location')
+  @UsePipes(CustomValidationPipe)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'location update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async updateLocationSetting(
     @Body('isLocation') isLocation: boolean,
     @Req() req,
@@ -30,6 +38,9 @@ export class SettingsController {
   }
 
   @Patch('push-notification')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'notification update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async updatePushNotificationSetting(
     @Body('isPushNotification') isPushNotification: boolean,
     @Req() req,
@@ -49,6 +60,9 @@ export class SettingsController {
   }
 
   @Patch('email-notification')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @ApiOperation({ summary: 'email notification update' })
+  @ApiResponse({ status: 200, description: 'Success' })
   async updateEmailNotificationSetting(
     @Body('isEmailNotification') isEmailNotification: boolean,
     @Req() req,

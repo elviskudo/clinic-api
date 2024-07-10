@@ -1,22 +1,18 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, HttpException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
-import { User } from 'src/entity/profile/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Role } from 'src/entity/role.entity';
 import { format_json } from 'src/env';
+import { Response } from 'express';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly jwtService: JwtService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Role)
-    private readonly roleRepository: Repository<Role>,
+    private prisma: PrismaService,
   ) {}
 
   async canActivate(
@@ -28,9 +24,11 @@ export class RolesGuard implements CanActivate {
     }
     
     const request = context.switchToHttp().getRequest();
+    const response = context.switchToHttp().getResponse();
     const token = request.headers.authorization?.split(' ')[1]; 
     if (!token) {
-      throw new UnauthorizedException('Token not found');
+      this.throwFormattedException(response, 400, 'Token not found', 'UnauthorizedException');
+      return false;
     }
 
     try {
@@ -38,6 +36,7 @@ export class RolesGuard implements CanActivate {
       const user = await this.findUserById(decodedToken.userId);
 
       if (!user || !user.role_id) {
+        this.throwFormattedException(response, 403, 'Access denied', 'ForbiddenException');
         return false;
       }
 
@@ -45,17 +44,34 @@ export class RolesGuard implements CanActivate {
       const userRoleIds = userRoles.map(role => role.id);
 
       const hasRole = userRoleIds.includes(user.role_id);
+      if (!hasRole) {
+        this.throwFormattedException(response, 403, 'Access denied', 'ForbiddenException');
+        return false;
+      }
       return hasRole;
     } catch (error) {
-      throw new UnauthorizedException('Invalid token');
+      this.throwFormattedException(response, 400, 'Invalid token', 'UnauthorizedException');
+      return false;
     }
   }
 
-  async findUserById(userId: number): Promise<User> {
-    return this.userRepository.findOne({ where : { id: userId } });
+  async findUserById(userId: string) {
+    return this.prisma.user.findUnique({ where : { id: userId } });
   }
 
-  async findRole(role: string): Promise<Role> {
-    return this.roleRepository.findOne({ where : { name: role } });
+  async findRole(role: string){
+    return this.prisma.role.findFirst({ where : { name: role } });
+  }
+
+  private throwFormattedException(response: Response, status: number, message: string, exceptionType: string) {
+    const formattedResponse = format_json(
+      status,
+      false,
+      message,
+      null,
+      message,
+      null,
+    );
+    response.status(status).json(formattedResponse);
   }
 }

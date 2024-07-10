@@ -1,39 +1,61 @@
-import { IsString, MaxLength, IsBoolean, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString, MaxLength, IsBoolean, IsOptional, IsNotEmpty } from 'class-validator';
 
 export class UpdateSummaryDto {
   @IsString()
-  @IsOptional()
-  doctor_name?: string;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  poly_id: number;
 
   @IsString()
-  @IsOptional()
-  polies_name?: string;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  doctor_id: number;
 
-  @IsOptional()
-  scheduled_date_time?: Date;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  scheduled_date_time: Date;
 
   @IsString()
-  @IsOptional()
-  qr_code?: string;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  qr_code: string;
 
   @IsBoolean()
   @IsOptional()
+  @ApiProperty()
   image_captured_checked?: boolean;
 
   @IsString()
-  @IsOptional()
-  patient_name?: string;
-
-  @IsString()
   @MaxLength(256)
-  @IsOptional()
-  symptoms?: string;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  symptoms: string;
 
   @IsString()
-  @IsOptional()
-  symptoms_description?: string;
+  @IsNotEmpty({ message: 'should not be empty' })
+  @ApiProperty()
+  symptoms_description: string;
 
-  @IsString()
   @IsOptional()
-  avatar_of_doctor?: string;
+  @ApiProperty()
+  status?: boolean;
+
+  @IsOptional()
+  @ApiProperty()
+  ai_status?: boolean;
+
+  @IsOptional()
+  @ApiProperty()
+  ai_response?: string;
+
+  @IsOptional()
+  @ApiProperty()
+  image_url: string;
+
+  @IsOptional()
+  @ApiProperty()
+  ai_token: string;
+
+  drug: { drug_id: number; qty: number }[];
 }
