@@ -22,4 +22,5 @@ ENV APP_ENV=production
 EXPOSE 3000
 
 # Start the server using the production build
-CMD ["npm", "run", "start:prod"]
+# CMD ["npm", "run", "start:prod"]
+CMD ["node", "dist/main.js"]
