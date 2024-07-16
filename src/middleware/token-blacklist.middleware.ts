@@ -12,7 +12,7 @@ export class TokenBlacklistMiddleware implements NestMiddleware {
     if(authorizationHeader) {
       const token = authorizationHeader.split(' ')[1];
       if (token && this.blacklistService.isInBlacklist(token)) {
-        return res.status(400).json(format_json(200, true, null, null, 'Invalid Token', null));
+        return res.status(400).json(format_json(200, true, null, null, 'Invalid Token got logout', null));
       }
     }
     next();

@@ -5,7 +5,7 @@ export class CreateDTO {
 
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  redemption_date_and_time: Date;
+  redemption_date_and_time: String;
 
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()

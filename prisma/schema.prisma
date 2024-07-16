@@ -21,6 +21,7 @@ model wilayah {
   profile Profile[] @relation()
   clinic Clinic[] @relation()
   doctor Doctor[] @relation()
+  record Record[] @relation()
 }
 
 model User {
@@ -193,7 +194,7 @@ model Drug {
 model Fee {
   id String  @id @default(uuid())
   activities String
-  cost String
+  cost Int
   clinic_id String
   clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   paymentdetails PaymentDetails[] @relation()
@@ -215,9 +216,9 @@ model LastRedeem {
 
 model Record {
   id String  @id @default(uuid())
-  consultation_date_time DateTime @db.DateTime(0)
+  consultation_date_time String
   way_to_come String
-  vistting_time DateTime @db.DateTime(0)
+  vistting_time String
   transportation String
   reference String
   person_responsible String
@@ -235,6 +236,8 @@ model Record {
   clinic Clinic @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
   doctor_id String
   doctor Doctor @relation(fields: [doctor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  city_id BigInt?
+  city    wilayah? @relation(fields: [city_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
 model Payment {
@@ -271,6 +274,14 @@ model ProfileConfiguration {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
 
+enum Status {
+  waiting
+  diagnosed
+  checkout
+  completed
+  rejected
+}
+
 model Summary {
   id String  @id @default(uuid())
   poly_id String
@@ -285,7 +296,7 @@ model Summary {
   approved_by_doctor_id Int?
   symptoms String
   symptoms_description String @db.Text
-  status Boolean?
+  status Status
   ai_status Boolean?
   ai_response String @db.Text
   image_url String
@@ -400,6 +411,5 @@ model Transaction {
   handling_fees  Int
   room_cost      BigInt
   payment_id     String
-  payment        Payment @relation(fields: [payment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  payment        Payment @relation(fields: [payment_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }
-

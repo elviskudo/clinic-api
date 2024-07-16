@@ -35,8 +35,8 @@ export class DrugDto {
   @ApiProperty()
   company_name: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  category_id: number;
+  category_id: string;
 }

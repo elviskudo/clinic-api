@@ -9,6 +9,9 @@ import {
   Res,
   UseGuards,
   UsePipes,
+  Logger,
+  Req,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
@@ -25,6 +28,8 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 @ApiTags('Medical Records')
 @Controller('api/medicalrecords')
 export class MedicalRecordController {
+  private readonly logger = new Logger(MedicalRecordController.name);
+
   constructor(private readonly medicalRecordService: MedicalRecordService) {}
 
   @Post()
@@ -36,33 +41,70 @@ export class MedicalRecordController {
   async create(
     @Body() medicalRecordDto: MedicalRecordDto,
     @Res() res: Response,
+    @Req() req: Request
   ) {
     try {
+      const authorizationHeader = req.headers['authorization'];
+
+      if (!authorizationHeader) {
+        console.log('Authorization header is missing');
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Authorization header is missing',
+              null,
+            ),
+          );
+      }
+
+      const token = authorizationHeader.split(' ')[1];
+      if (!token) {
+        console.log('Bearer token is missing');
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(
+            format_json(
+              400,
+              false,
+              null,
+              null,
+              'Bearer token is missing',
+              null,
+            ),
+          );
+      }
+
+
       const createdRecord =
-        await this.medicalRecordService.createRecord(medicalRecordDto);
+      await this.medicalRecordService.createRecord(medicalRecordDto,token);
+
+      if (createdRecord.status) {
+        return res
+          .status(HttpStatus.OK)
+          .json(
+            format_json(200, true, null, null, createdRecord.message, createdRecord.data),
+          );
+      } else {
+        return res
+          .status(HttpStatus.BAD_REQUEST)
+          .json(format_json(400, false, null, createdRecord.data, createdRecord.message, null));
+      }
+    } catch (error:any) {
       return res
-        .status(201)
+        .status(HttpStatus.INTERNAL_SERVER_ERROR)
         .json(
           format_json(
-            201,
+            500,
+            false,
             true,
             null,
-            null,
-            'Medical record created successfully',
-            createdRecord,
-          ),
-        );
-    } catch (error) {
-      return res
-        .status(400)
-        .json(
-          format_json(
-            400,
-            false,
-            'Bad Request',
-            null,
-            'Failed to create medical record',
-            error || error,
+            'Server Error ' + error,
+            error.message,
           ),
         );
     }
@@ -111,6 +153,9 @@ export class MedicalRecordController {
           ),
         );
     } catch (error) {
+      this.logger.error('Error updating medical record', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       return res
         .status(400)
         .json(
@@ -120,7 +165,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to update medical record',
-            error || error,
+            errorMessage,
           ),
         );
     }
@@ -146,6 +191,9 @@ export class MedicalRecordController {
           ),
         );
     } catch (error) {
+      this.logger.error('Error retrieving medical records', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       return res
         .status(400)
         .json(
@@ -155,7 +203,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to retrieve medical records',
-            error || error,
+            errorMessage,
           ),
         );
     }
@@ -195,6 +243,9 @@ export class MedicalRecordController {
           ),
         );
     } catch (error) {
+      this.logger.error('Error retrieving medical record', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       return res
         .status(400)
         .json(
@@ -204,7 +255,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to retrieve medical record',
-            error || error,
+            errorMessage,
           ),
         );
     }
@@ -245,6 +296,9 @@ export class MedicalRecordController {
           ),
         );
     } catch (error) {
+      this.logger.error('Error deleting medical record', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       return res
         .status(400)
         .json(
@@ -254,7 +308,7 @@ export class MedicalRecordController {
             'Bad Request',
             null,
             'Failed to delete medical record',
-            error || error,
+            errorMessage,
           ),
         );
     }

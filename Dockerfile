@@ -14,6 +14,7 @@ RUN npm install
 COPY . .
 
 # Creates a "dist" folder with the production build
+RUN npx prisma generate
 RUN npm run build
 
 ENV APP_ENV=production

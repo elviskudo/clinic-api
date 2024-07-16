@@ -13,8 +13,8 @@ export class PolyDto {
   @ApiProperty()
   description: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  clinic_id: number;
+  clinic_id: string;
 }

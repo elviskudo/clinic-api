@@ -63,10 +63,14 @@ export class AuthenticationService {
         };
       }
 
+      const getrole = await this.prisma.role.findFirst({
+        where : { name: 'patient' }
+      })
+
       const userData = {
         email: AuthDTO.email,
-        password: bcrypt.hash(AuthDTO.password, 10),
-        role_id: '972c32e3-b860-4566-947d-ee2543c1da85',
+        password: await bcrypt.hash(AuthDTO.password, 10),
+        role_id: getrole.id,
         verifed: 0,
       };
 
@@ -92,11 +96,6 @@ export class AuthenticationService {
         user: {
           connect: {
             id: user.id,
-          },
-        },
-        city: {
-          connect: {
-            id: null,
           },
         },
         neighborhood_no: null,
@@ -233,7 +232,7 @@ export class AuthenticationService {
 
       return {
         status: true,
-        message: 'Berhasil mengirim ulang Kode OTP',
+        message: 'Success to resend verification otp',
         users: {
           id: checkuser.id,
           email: checkuser.email,
@@ -405,12 +404,48 @@ export class AuthenticationService {
         }
       });
 
-      if (!user || user.password !== authDTO.password) {
+      if (!user) {
         return {
           status: false,
-          message: 'Email atau password salah',
+          message: 'User not found',
           users: null,
           token: null,
+        };
+      }
+
+      const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
+
+      if (!isPasswordValid) {
+        return {
+          status: false,
+          message: 'Password failed',
+          users: {
+            id: null,
+            email: null,
+            role: null,
+            verifikasi: false,
+          },
+          token: null,
+        };
+      }
+
+      if (user.verifed == 0) {
+        const token_verifikasi = jwt.sign(
+          { userId: user.id, verifikasi: false },
+          process.env.JWT_SECRET,
+          { expiresIn: '7d' },
+        );
+  
+        return {
+          status: true,
+          message: 'verification your account',
+          users: {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            verifikasi: false,
+          },
+          token: token_verifikasi,
         };
       }
 
@@ -424,7 +459,7 @@ export class AuthenticationService {
 
       return {
         status: true,
-        message: 'Berhasil',
+        message: 'Berhasil login',
         users: {
           id: user.id,
           email: user.email,

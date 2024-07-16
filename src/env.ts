@@ -15,3 +15,13 @@ export const format_json = (
   message: message,
   data: data,
 });
+
+
+export class AuthResponse {
+  status: number;
+  success: boolean;
+  error: boolean;
+  data: any; 
+  message: string;
+  errorDetail?: string;
+}

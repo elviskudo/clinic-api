@@ -17,14 +17,18 @@ export class BankCategoryService {
 
     try {
       const validatedData = schema.parse(bankCategoryDto);
-      const create = this.prisma.bankCategory.create({
+      const create = await this.prisma.bankCategory.create({
         data: {
           category_name: validatedData.category_name,
           description: validatedData.description,
         },
       });
 
-      return create;
+      return {
+        status: true,
+        message: 'Success',
+        data: create,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -57,7 +61,7 @@ export class BankCategoryService {
 
     try {
       const validatedData = schema.parse(updateBankCategoryDto);
-      const update = this.prisma.bankCategory.update({
+      const update = await this.prisma.bankCategory.update({
         where: { id: id },
         data: {
           category_name: validatedData.category_name,
@@ -65,7 +69,11 @@ export class BankCategoryService {
         },
       });
 
-      return update;
+      return {
+        status: true,
+        message: 'Success',
+        data: update,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({

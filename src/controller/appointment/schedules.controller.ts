@@ -56,7 +56,7 @@ export class ScheduleController {
       } else {
         return res
         .status(400)
-        .json(format_json(400,false, null, null, gettallRecords.message, gettallRecords.data));
+        .json(format_json(400,false, null, gettallRecords.data, gettallRecords.message, null));
       }
     } catch (error) {
       return res
@@ -111,7 +111,7 @@ export class ScheduleController {
       } else {
         return res
         .status(400)
-        .json(format_json(400,false, null, null, createdata.message, null));
+        .json(format_json(400,false, null, createdata.data, createdata.message, null));
       }
     } catch (error) {
       return res
@@ -170,7 +170,7 @@ export class ScheduleController {
       } else {
         return res
         .status(400)
-        .json(format_json(400,false, null, null, createdata.message, null));
+        .json(format_json(400,false, null, createdata.data, createdata.message, null));
       }
     } catch (error) {
       return res
@@ -225,7 +225,7 @@ export class ScheduleController {
       } else {
         return res
         .status(400)
-        .json(format_json(400,false, null, null, createdata.message, null));
+        .json(format_json(400,false, null, createdata.data, createdata.message, null));
       }
     } catch (error) {
       return res
@@ -287,7 +287,7 @@ export class ScheduleController {
       } else {
         return res
         .status(400)
-        .json(format_json(400,false, null, null, createdata.message, null));
+        .json(format_json(400,false, null, createdata.data, createdata.message, null));
       }
     } catch (error) {
       return res
@@ -337,7 +337,7 @@ export class ScheduleController {
       } else {
         return res
         .status(400)
-        .json(format_json(400, false, null, null, gettallRecords.message, gettallRecords.data));
+        .json(format_json(400, false, null, gettallRecords.data, gettallRecords.message, null));
       }
     } catch (error) {
       return res

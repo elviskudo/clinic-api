@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Clinic } from '@prisma/client';
 import { ClinicDto } from 'src/dto/clinic/clinic.dto';
 import { UpdateClinicDto } from 'src/dto/clinic/update.clinic.dto';
 import { PrismaService } from 'src/prisma.service';
@@ -18,7 +19,7 @@ export class ClinicService {
       post_code: z.string().min(1),
       latitude: z.number().int().min(1),
       longitude: z.number().int().min(1),
-      city_id: z.bigint(),
+      city_id: z.number().int().min(1),
     });
 
     try {
@@ -42,7 +43,20 @@ export class ClinicService {
         },
       });
 
-      return create;
+      const serializedResult = {
+        ...create,
+        city_id: Number(create.city_id),
+        city: {
+          ...create.city,
+          id: Number(create.city.id),
+        },
+      };
+
+      return {
+        status: true,
+        message: 'Success',
+        data: serializedResult,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -75,7 +89,7 @@ export class ClinicService {
       post_code: z.string().min(1),
       latitude: z.number().int().min(1),
       longitude: z.number().int().min(1),
-      city_id: z.bigint(),
+      city_id: z.number().int().min(1),
     });
 
     try {
@@ -100,7 +114,20 @@ export class ClinicService {
         },
       });
 
-      return update;
+      const serializedResult = {
+        ...update,
+        city_id: Number(update.city_id),
+        city: {
+          ...update.city,
+          id: Number(update.city.id),
+        },
+      };
+
+      return {
+        status: true,
+        message: 'Success',
+        data: serializedResult,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -126,7 +153,7 @@ export class ClinicService {
   }
 
   async findOne(id: string) {
-    return await this.prisma.clinic.findUnique({
+    const get = await this.prisma.clinic.findUnique({
       where: {
         id: id,
       },
@@ -134,14 +161,36 @@ export class ClinicService {
         city: true,
       },
     });
+
+    const serializedResult = {
+      ...get,
+      city_id: Number(get.city_id),
+      city: {
+        ...get.city,
+        id: Number(get.city.id),
+      },
+    };
+
+    return serializedResult;
   }
 
   async findAll() {
-    return await this.prisma.clinic.findMany({
+    const clinics = await this.prisma.clinic.findMany({
       include: {
         city: true,
       },
     });
+
+    const result = clinics.map((clinics) => ({
+      ...clinics,
+      city_id: Number(clinics.city_id),
+      city: {
+        ...clinics.city,
+        id: Number(clinics.city.id),
+      },
+    }));
+
+    return result;
   }
 
   async removeClinic(id: string) {

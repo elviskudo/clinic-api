@@ -19,7 +19,7 @@ export class BankService {
 
     try {
       const validatedData = schema.parse(bankDto);
-      const create = this.prisma.bank.create({
+      const create = await this.prisma.bank.create({
         data: {
           bank_name: validatedData.bank_name,
           account_number: validatedData.account_number,
@@ -38,7 +38,11 @@ export class BankService {
         },
       });
 
-      return create;
+      return {
+        status: true,
+        message: 'Success',
+        data: create,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -72,7 +76,7 @@ export class BankService {
 
     try {
       const validatedData = schema.parse(updateBankDto);
-      const update = this.prisma.bank.update({
+      const update = await this.prisma.bank.update({
         where: { id: id },
         data: {
           bank_name: validatedData.bank_name,
@@ -94,7 +98,11 @@ export class BankService {
         },
       });
 
-      return update;
+      return {
+        status: true,
+        message: 'Success',
+        data: update,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({

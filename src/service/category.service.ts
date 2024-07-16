@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { PrismaService } from 'src/prisma.service';
 import { CategoryDto } from 'src/dto/category/category.dto';
 import { UpdateCategoryDto } from 'src/dto/category/update.category.dto';
-import { PrismaService } from 'src/prisma.service';
-import { Repository } from 'typeorm';
 import { ZodError, z } from 'zod';
 
 @Injectable()
@@ -25,7 +23,11 @@ export class CategoryService {
         },
       });
 
-      return create;
+      return {
+        status: true,
+        message: 'Success',
+        data: create,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -33,9 +35,17 @@ export class CategoryService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validation failed',
+          data: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'An error occurred',
+        data: null,
+      };
     }
   }
 
@@ -55,7 +65,11 @@ export class CategoryService {
         },
       });
 
-      return update;
+      return {
+        status: true,
+        message: 'Success',
+        data: update,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -63,27 +77,83 @@ export class CategoryService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validation failed',
+          data: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'An error occurred',
+        data: null,
+      };
     }
   }
 
   async findAll() {
-    return await this.prisma.drugCategory.findMany();
+    const categories = await this.prisma.drugCategory.findMany();
+    return {
+      status: true,
+      message: 'Categories successfully retrieved',
+      data: categories,
+    };
   }
 
   async findOne(id: string) {
-    return await this.prisma.drugCategory.findUnique({
+    const category = await this.prisma.drugCategory.findUnique({
       where: { id: id },
     });
+
+    if (category) {
+      return {
+        status: true,
+        message: 'Success',
+        data: category,
+      };
+    } else {
+      return {
+        status: false,
+        message: 'Category not found',
+        data: null,
+      };
+    }
   }
 
   async removeCategory(id: string) {
-    return await this.prisma.drugCategory.delete({
+    const deleteCategory = await this.prisma.drugCategory.delete({
       where: {
         id: id,
       },
     });
+
+    if (deleteCategory) {
+      return {
+        status: true,
+        message: 'Category successfully deleted',
+        data: deleteCategory,
+      };
+    } else {
+      return {
+        status: false,
+        message: 'Failed to delete category',
+        data: null,
+      };
+    }
   }
 }
+
+/*
+{
+    "status": 201,
+    "success": true,
+    "errors": null,
+    "meta": null,
+    "message": "Category created successfully",
+    "data": {
+        "id": "02546d8a-6d3a-4119-9767-20df7f20334a",
+        "category_name": "Antibiotic",
+        "description": "Description for Antibiotic drugs"
+    }
+}
+*/

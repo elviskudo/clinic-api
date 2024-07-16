@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { PrismaService } from 'src/prisma.service';
 import { TermDto } from 'src/dto/term/term.dto';
 import { UpdateTermDto } from 'src/dto/term/update.term.dto';
 import { TicketDto } from 'src/dto/term/ticket.dto';
-import { PrismaService } from 'src/prisma.service';
 import { ZodError, z } from 'zod';
 import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class TermService {
-  constructor(
-    private prisma: PrismaService
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async createTerm(termDto: TermDto) {
     const schema = z.object({
@@ -24,22 +20,25 @@ export class TermService {
     try {
       const validatedData = schema.parse(termDto);
       const create = await this.prisma.term.create({
-        data  : {
+        data: {
           term_category: {
             connect: {
-              id: validatedData.term_category_id
-            }
+              id: validatedData.term_category_id,
+            },
           },
           title: validatedData.title,
           content: validatedData.content,
-          },
-          include: {
-            term_category: true
-          }
-        })
+        },
+        include: {
+          term_category: true,
+        },
+      });
 
-      return create;
-
+      return {
+        status: true,
+        message: 'Term successfully created',
+        data: create,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -47,9 +46,17 @@ export class TermService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validation failed',
+          data: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'An error occurred',
+        data: null,
+      };
     }
   }
 
@@ -63,23 +70,26 @@ export class TermService {
     try {
       const validatedData = schema.parse(updateTermDto);
       const update = await this.prisma.term.update({
-        where: { id: id},
-        data  : {
+        where: { id: id },
+        data: {
           term_category: {
             connect: {
-              id: validatedData.term_category_id
-            }
+              id: validatedData.term_category_id,
+            },
           },
           title: validatedData.title,
           content: validatedData.content,
-          },
-          include: {
-            term_category: true
-          }
-        })
+        },
+        include: {
+          term_category: true,
+        },
+      });
 
-      return update;
-
+      return {
+        status: true,
+        message: 'Term successfully updated',
+        data: update,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -87,35 +97,77 @@ export class TermService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validation failed',
+          data: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'An error occurred',
+        data: null,
+      };
     }
   }
 
   async findAll() {
-    return await this.prisma.term.findMany({
+    const terms = await this.prisma.term.findMany({
       include: {
-        term_category: true
-      }
+        term_category: true,
+      },
     });
+
+    return {
+      status: true,
+      message: 'Terms successfully retrieved',
+      data: terms,
+    };
   }
 
   async findOne(id: string) {
-    return await this.prisma.term.findUnique({
-      where: {id : id},
+    const term = await this.prisma.term.findUnique({
+      where: { id: id },
       include: {
-        term_category: true
-      }
+        term_category: true,
+      },
     });
+
+    if (term) {
+      return {
+        status: true,
+        message: 'Term found',
+        data: term,
+      };
+    } else {
+      return {
+        status: false,
+        message: 'Term not found',
+        data: null,
+      };
+    }
   }
 
   async removeTerm(id: string) {
-    return await this.prisma.term.delete({
+    const deleteTerm = await this.prisma.term.delete({
       where: {
         id: id,
       },
     });
+
+    if (deleteTerm) {
+      return {
+        status: true,
+        message: 'Term successfully deleted',
+        data: deleteTerm,
+      };
+    } else {
+      return {
+        status: false,
+        message: 'Failed to delete term',
+        data: null,
+      };
+    }
   }
 
   async sendTicket(ticketDto: TicketDto, token: string) {
@@ -132,23 +184,26 @@ export class TermService {
         var userId = extracttoken.userId;
       }
       const create = await this.prisma.ticket.create({
-        data  : {
+        data: {
           user: {
             connect: {
-              id: userId
-            }
+              id: userId,
+            },
           },
           title: validatedData.title,
           content: validatedData.content,
-          email: validatedData.email
-          },
-          include: {
-            user: true
-          }
-        })
+          email: validatedData.email,
+        },
+        include: {
+          user: true,
+        },
+      });
 
-      return create;
-
+      return {
+        status: true,
+        message: 'Ticket sent successfully',
+        data: create,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -156,17 +211,31 @@ export class TermService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validation failed',
+          data: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'An error occurred',
+        data: null,
+      };
     }
   }
 
   async findAllTickets() {
-    return await this.prisma.ticket.findMany({
+    const tickets = await this.prisma.ticket.findMany({
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
+
+    return {
+      status: true,
+      message: 'Tickets successfully retrieved',
+      data: tickets,
+    };
   }
 }

@@ -20,9 +20,17 @@ import { Roles } from 'src/middleware/role.decorator';
 import { RolesGuard } from 'src/middleware/role.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { FeeService } from 'src/service/fee/fee.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiSecurity,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('Fees')
+@ApiSecurity('bearer')
+@ApiBearerAuth()
 @Controller('api/fees')
 @UseGuards(RolesGuard)
 export class FeeController {
@@ -32,8 +40,20 @@ export class FeeController {
   @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Create' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiOperation({ summary: 'Create Fee' })
+  @ApiResponse({
+    status: 201,
+    description: 'Fee created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        clinic_id: { type: 'string' },
+        activities: { type: 'string' },
+        cost: { type: 'number' },
+      },
+    },
+  })
   async create(
     @Body() feeDto: FeeDto,
     @Req() req: Request,
@@ -73,8 +93,20 @@ export class FeeController {
   @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Update' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiOperation({ summary: 'Update Fee' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        clinic_id: { type: 'string' },
+        activities: { type: 'string' },
+        cost: { type: 'number' },
+      },
+    },
+  })
   async update(
     @Param('id') id: string,
     @Body() updateFeeDto: UpdateFeeDto,
@@ -121,8 +153,23 @@ export class FeeController {
   @Get()
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Get' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiOperation({ summary: 'Get all Fees' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fees retrieved successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', format: 'uuid' },
+          clinic_id: { type: 'string' },
+          activities: { type: 'string' },
+          cost: { type: 'number' },
+        },
+      },
+    },
+  })
   async findAll(@Req() req: Request, @Res() res: Response) {
     try {
       const fees = await this.feeService.findAll();
@@ -157,8 +204,20 @@ export class FeeController {
   @Get(':id')
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Details' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiOperation({ summary: 'Get Fee details by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        clinic_id: { type: 'string' },
+        activities: { type: 'string' },
+        cost: { type: 'number' },
+      },
+    },
+  })
   async findOne(
     @Param('id') id: string,
     @Req() req: Request,
@@ -195,8 +254,20 @@ export class FeeController {
   @Delete(':id')
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'))
-  @ApiOperation({ summary: 'Delete' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiOperation({ summary: 'Delete Fee' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fee deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        clinic_id: { type: 'string' },
+        activities: { type: 'string' },
+        cost: { type: 'number' },
+      },
+    },
+  })
   async remove(
     @Param('id') id: string,
     @Req() req: Request,

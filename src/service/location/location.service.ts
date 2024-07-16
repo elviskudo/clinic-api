@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { wilayah } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import { Repository, Like } from 'typeorm';
 
@@ -15,29 +16,37 @@ export class WilayahService {
     limit: number,
     order: 'asc' | 'desc' = 'asc',
   ) {
-    const skip = (page - 1) * limit;
-
+    const skip = Math.floor((page - 1) * limit);
+  
     const whereClause = query
-    ? {
-        OR: [
-          { provinsi: { contains: query, mode: 'insensitive' } },
-          { kabupaten: { contains: query, mode: 'insensitive' } },
-          { kecamatan: { contains: query, mode: 'insensitive' } },
-          { kelurahan: { contains: query, mode: 'insensitive' } },
-        ],
-      }
-    : {};
-
-    const result = this.prisma.wilayah.findMany({
+  ? {
+      OR: [
+        { provinsi: { contains: query } },
+        { kabupaten: { contains: query } },
+        { kecamatan: { contains: query } },
+        { kelurahan: { contains: query } },
+      ],
+    }
+  : {};
+  
+    if (!limit) {
+      limit = 10;
+    }
+  
+    const result = await this.prisma.wilayah.findMany({
       where: whereClause,
-      take: limit || 10,
-      skip: skip || 0,
+      take: Number(limit),
+      skip: skip,
       orderBy: {
         kabupaten: order,
       },
-    })
+    });
 
-
-    return result;
+    const serializedResult = result.map((item: wilayah) => ({
+      ...item,
+      id: Number(item.id), 
+    }));
+  
+    return serializedResult;
   }
 }

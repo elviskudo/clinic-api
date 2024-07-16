@@ -1,4 +1,4 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import * as jwt from 'jsonwebtoken';
 import { paymentDTO } from 'src/dto/payment/payment.dto';
@@ -14,9 +14,21 @@ export class PaymentService {
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
       const userId = extracttoken.userId;
 
+      const profile = await this.prisma.profile.findUnique({
+        where: { user_id: userId },
+      });
+
+      if (!profile) {
+        return {
+          status: false,
+          message: 'Profile tidak ditemukan',
+          data: null,
+        };
+      }
+
       try {
         const payments = await this.prisma.payment.findMany({
-          where: { user_id: userId },
+          where: { user_id: profile.id },
           include: {
             bank: {
               include: {
@@ -41,7 +53,7 @@ export class PaymentService {
               drugs: payment.redeem?.drug.map((drug) => ({
                 id: drug.id,
                 name: drug.drug_name,
-                price: drug.sell_price,
+                price: Number(drug.sell_price),
               })),
             },
             status: payment.status,
@@ -88,13 +100,25 @@ export class PaymentService {
       if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
         const userId = extracttoken.userId;
 
+        const profile = await this.prisma.profile.findUnique({
+          where: { user_id: userId },
+        });
+
+        if (!profile) {
+          return {
+            status: false,
+            message: 'Profile tidak ditemukan',
+            data: null,
+          };
+        }
+
         const create = await this.prisma.payment.create({
           data: {
             payment_name: validatedData.payment_name,
             bank_id: validatedData.bank_id,
             redeem_id: validatedData.redeem_id,
             status: 'Pending',
-            user_id: userId,
+            user_id: profile.id,
           },
           include: {
             bank: {
@@ -110,10 +134,21 @@ export class PaymentService {
           },
         });
 
+        const serializedResult = {
+          ...create,
+          redeem: {
+            ...create.redeem,
+            drug: create.redeem.drug.map((drug) => ({
+              ...drug,
+              sell_price: Number(drug.sell_price),
+            })),
+          },
+        };
+
         return {
           status: true,
           message: 'Data successfully created',
-          data: create,
+          data: serializedResult,
         };
       } else {
         return {
@@ -132,7 +167,7 @@ export class PaymentService {
         return {
           status: false,
           message: 'Validation failed',
-          errors: errorMessages,
+          data: errorMessages,
         };
       }
       return {
@@ -197,10 +232,21 @@ export class PaymentService {
           },
         });
 
+        const serializedResult = {
+          ...update,
+          redeem: {
+            ...update.redeem,
+            drug: update.redeem.drug.map((drug) => ({
+              ...drug,
+              sell_price: Number(drug.sell_price),
+            })),
+          },
+        };
+
         return {
           status: true,
           message: 'Data successfully updated',
-          data: update,
+          data: serializedResult,
         };
       } else {
         return {
@@ -219,7 +265,7 @@ export class PaymentService {
         return {
           status: false,
           message: 'Validation failed',
-          errors: errorMessages,
+          data: errorMessages,
         };
       }
       return {

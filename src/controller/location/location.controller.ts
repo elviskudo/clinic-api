@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { WilayahService } from 'src/service/location/location.service';
 
 @ApiTags('Wilayah / City')
@@ -10,6 +10,10 @@ export class WilayahController {
   @Get()
   @ApiOperation({ summary: 'Get' })
   @ApiResponse({ status: 200, description: 'Success' })
+  @ApiQuery({ name: 'q', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
+  @ApiQuery({ name: 'order', required: false, enum: ['asc', 'desc'], example: 'asc' })
   async findAllCities(
     @Query('q') query: string = '',
     @Query('page') page: number = 1,

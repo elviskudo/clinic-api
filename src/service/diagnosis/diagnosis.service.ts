@@ -14,8 +14,20 @@ export class DiagnosisService {
     if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
       const userId = extracttoken.userId;
 
-      const diagnosis = await this.prisma.diagnosis.findMany({
+      const profile = await this.prisma.profile.findUnique({
         where: { user_id: userId },
+      });
+
+      if (!profile) {
+        return {
+          status: false,
+          message: 'Profile tidak ditemukan',
+          data: null,
+        };
+      }
+
+      const diagnosis = await this.prisma.diagnosis.findMany({
+        where: { user_id: profile.id },
         include: {
           user: true,
         },
@@ -60,9 +72,21 @@ export class DiagnosisService {
       if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
         const userId = extracttoken.userId;
 
+        const profile = await this.prisma.profile.findUnique({
+          where: { user_id: userId },
+        });
+
+        if (!profile) {
+          return {
+            status: false,
+            message: 'Profile tidak ditemukan',
+            data: null,
+          };
+        }
+
         const create = await this.prisma.diagnosis.create({
           data: {
-            user_id: userId,
+            user_id: profile.id,
             deaseas_name: validatedData.deaseas_name,
           },
           include: {

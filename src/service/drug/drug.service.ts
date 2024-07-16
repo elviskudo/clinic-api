@@ -20,9 +20,9 @@ export class DrugService {
         redeem: {
           include: {
             bank: {
-                include: {
-                    bank_category: true
-                }
+              include: {
+                bank_category: true,
+              },
             },
             user: true,
           },
@@ -36,8 +36,8 @@ export class DrugService {
       drug_name: z.string().min(1),
       stock: z.number().int().nonnegative(),
       drug_summary: z.string().min(1),
-      buy_price: z.bigint().nonnegative(),
-      sell_price: z.bigint().nonnegative(),
+      buy_price: z.number().int().min(1),
+      sell_price: z.number().int().min(1),
       image_url: z.string().url().optional(),
       company_name: z.string().min(1),
       category_id: z.string().min(1),
@@ -86,19 +86,19 @@ export class DrugService {
             },
           },
         },
-         include: {
-        category: true,
-        redeem: {
-          include: {
-            bank: {
+        include: {
+          category: true,
+          redeem: {
+            include: {
+              bank: {
                 include: {
-                    bank_category: true
-                }
+                  bank_category: true,
+                },
+              },
+              user: true,
             },
-            user: true,
           },
         },
-      },
       });
 
       return create;
@@ -127,8 +127,8 @@ export class DrugService {
       drug_name: z.string().min(1),
       stock: z.number().int().nonnegative(),
       drug_summary: z.string().min(1),
-      buy_price: z.bigint().nonnegative(),
-      sell_price: z.bigint().nonnegative(),
+      buy_price: z.number().int().min(1),
+      sell_price: z.number().int().min(1),
       image_url: z.string().url().optional(),
       company_name: z.string().min(1),
       category_id: z.string().min(1),
@@ -159,18 +159,18 @@ export class DrugService {
           },
         },
         include: {
-        category: true,
-        redeem: {
-          include: {
-            bank: {
+          category: true,
+          redeem: {
+            include: {
+              bank: {
                 include: {
-                    bank_category: true
-                }
+                  bank_category: true,
+                },
+              },
+              user: true,
             },
-            user: true,
           },
         },
-      },
       });
 
       return update;
@@ -202,9 +202,9 @@ export class DrugService {
         redeem: {
           include: {
             bank: {
-                include: {
-                    bank_category: true
-                }
+              include: {
+                bank_category: true,
+              },
             },
             user: true,
           },
@@ -215,19 +215,19 @@ export class DrugService {
 
   async findAll(): Promise<any[]> {
     return this.prisma.drug.findMany({
-        include: {
-            category: true,
-            redeem: {
+      include: {
+        category: true,
+        redeem: {
+          include: {
+            bank: {
               include: {
-                bank: {
-                    include: {
-                        bank_category: true
-                    }
-                },
-                user: true,
+                bank_category: true,
               },
             },
+            user: true,
           },
+        },
+      },
     });
   }
 

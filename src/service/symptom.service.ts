@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { SymptomDto } from 'src/dto/symptom/symptom.dto';
-import { UpdateSymptomDto } from 'src/dto/symptom/update.symptom.dto';
-import { PrismaService } from 'src/prisma.service';
-import { Repository } from 'typeorm';
 import { ZodError, z } from 'zod';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class SymptomService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async createSymptom(symptomDto) {
     const schema = z.object({
@@ -21,8 +15,9 @@ export class SymptomService {
 
     try {
       const validatedData = schema.parse(symptomDto);
+
       const create = await this.prisma.symptom.create({
-        data  : {
+        data: {
           name: validatedData.name,
           description: validatedData.description,
           poly: {
@@ -31,21 +26,38 @@ export class SymptomService {
             },
           },
         },
-        include : {
+        include: {
           poly: {
             include: {
               clinic: {
                 include: {
-                  city: true
-                }
-              }
-            }
-          }
-        }
-      })
+                  city: true,
+                },
+              },
+            },
+          },
+        },
+      });
 
-      return create;
+      const serializedResult = {
+        ...create,
+        poly: {
+          clinic: {
+            ...create.poly.clinic,
+            city_id: Number(create.poly.clinic.city_id),
+            city: {
+              ...create.poly.clinic.city,
+              id: Number(create.poly.clinic.city.id),
+            },
+          },
+        },
+      };
 
+      return {
+        status: true,
+        message: 'Success',
+        data: serializedResult,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -53,16 +65,20 @@ export class SymptomService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
     }
   }
 
-  async updateSymptom(
-    id: string,
-    updateSymptomDto: UpdateSymptomDto,
-  ) {
+  async updateSymptom(id: string, updateSymptomDto) {
     const schema = z.object({
       name: z.string().min(1),
       description: z.string().min(1),
@@ -71,9 +87,10 @@ export class SymptomService {
 
     try {
       const validatedData = schema.parse(updateSymptomDto);
+
       const update = await this.prisma.symptom.update({
-        where: {id : id},
-        data  : {
+        where: { id: id },
+        data: {
           name: validatedData.name,
           description: validatedData.description,
           poly: {
@@ -82,21 +99,38 @@ export class SymptomService {
             },
           },
         },
-        include : {
+        include: {
           poly: {
             include: {
               clinic: {
                 include: {
-                  city: true
-                }
-              }
-            }
-          }
-        }
-      })
+                  city: true,
+                },
+              },
+            },
+          },
+        },
+      });
 
-      return update;
+      const serializedResult = {
+        ...update,
+        poly: {
+          clinic: {
+            ...update.poly.clinic,
+            city_id: Number(update.poly.clinic.city_id),
+            city: {
+              ...update.poly.clinic.city,
+              id: Number(update.poly.clinic.city.id),
+            },
+          },
+        },
+      };
 
+      return {
+        status: true,
+        message: 'Success',
+        data: serializedResult,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -104,48 +138,87 @@ export class SymptomService {
           message: error.message,
         }));
 
-        return errorMessages;
+        return {
+          status: false,
+          message: 'Validasi gagal',
+          errors: errorMessages,
+        };
       }
-      return e.message || 'Terjadi kesalahan';
+      return {
+        status: false,
+        message: e.message || 'Terjadi kesalahan',
+      };
     }
   }
 
   async findOne(id: string) {
-    return await this.prisma.symptom.findUnique({
-      where: {id : id},
-      include : {
+    const get = await this.prisma.symptom.findUnique({
+      where: { id: id },
+      include: {
         poly: {
           include: {
             clinic: {
               include: {
-                city: true
-              }
-            }
-          }
-        }
-      }
+                city: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    const serializedResult = {
+      ...get,
+      poly: {
+        clinic: {
+          ...get.poly.clinic,
+          city_id: Number(get.poly.clinic.city_id),
+          city: {
+            ...get.poly.clinic.city,
+            id: Number(get.poly.clinic.city.id),
+          },
+        },
+      },
+    };
+
+    return serializedResult;
   }
 
   async findAll() {
-    return await this.prisma.symptom.findMany({
-      include : {
+    const symptoms = await this.prisma.symptom.findMany({
+      include: {
         poly: {
           include: {
             clinic: {
               include: {
-                city: true
-              }
-            }
-          }
-        }
-      }
+                city: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    const result = symptoms.map((symptom) => ({
+      ...symptom,
+      poly: {
+        clinic: {
+          ...symptom.poly.clinic,
+          city_id: Number(symptom.poly.clinic.city_id),
+          city: {
+            ...symptom.poly.clinic.city,
+            id: Number(symptom.poly.clinic.city.id),
+          },
+        },
+      },
+    }));
+
+    return result;
   }
 
   async removeSymptom(id: string) {
     return await this.prisma.symptom.delete({
-      where: {id : id},
+      where: { id: id },
     });
   }
 }

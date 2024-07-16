@@ -18,9 +18,17 @@ import { TermCategoryService } from 'src/service/term/term.category.service';
 import { CustomValidationPipe } from 'src/custom-validation.pipe';
 import { Roles } from 'src/middleware/role.decorator';
 import { RolesGuard } from 'src/middleware/role.guard';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Term Category')
+@ApiSecurity('bearer')
+@ApiBearerAuth()
 @Controller('api/term-categories')
 @UseGuards(RolesGuard)
 export class TermCategoryController {
@@ -28,10 +36,20 @@ export class TermCategoryController {
 
   @Post()
   @Roles('admin', 'manager', 'operator')
-   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UsePipes(CustomValidationPipe)
   @ApiOperation({ summary: 'Create' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 201,
+    description: 'Term category created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+      },
+    },
+  })
   async create(@Body() termCategoryDto: TermCategoryDto) {
     try {
       const createdTermCategory =
@@ -61,10 +79,20 @@ export class TermCategoryController {
 
   @Put(':id')
   @Roles('admin', 'manager', 'operator')
-   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @UsePipes(CustomValidationPipe)
   @ApiOperation({ summary: 'Update' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Term category updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+      },
+    },
+  })
   async update(
     @Param('id') id: string,
     @Body() updateTermCategoryDto: UpdateTermCategoryDto,
@@ -100,9 +128,19 @@ export class TermCategoryController {
 
   @Get()
   @Roles('admin', 'manager', 'operator')
-   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Get' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Term category retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+      },
+    },
+  })
   async findAll() {
     try {
       const termCategories = await this.termCategoryService.findAll();
@@ -131,9 +169,19 @@ export class TermCategoryController {
 
   @Get(':id')
   @Roles('admin', 'manager', 'operator')
-   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Details' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Term category retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string' },
+      },
+    },
+  })
   async findOne(@Param('id') id: string) {
     try {
       const termCategory = await this.termCategoryService.findOne(id);
@@ -162,9 +210,18 @@ export class TermCategoryController {
 
   @Delete(':id')
   @Roles('admin', 'manager', 'operator')
-   @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Delete' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Term Category deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: { type: 'null' },
+      },
+    },
+  })
   async remove(@Param('id') id: string) {
     try {
       await this.termCategoryService.removeTermCategory(id);

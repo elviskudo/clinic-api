@@ -50,7 +50,7 @@ export class PaymentDetailsService {
         return {
           status: false,
           message: 'Validasi gagal',
-          errors: errorMessages,
+          data: errorMessages,
         };
       }
       return {
@@ -104,7 +104,7 @@ export class PaymentDetailsService {
         return {
           status: false,
           message: 'Validasi gagal',
-          errors: errorMessages,
+          data: errorMessages,
         };
       }
       return {

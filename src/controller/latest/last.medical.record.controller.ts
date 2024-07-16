@@ -56,9 +56,18 @@ export class LastMedicalRecordController {
         await this.lastMedicalRecordService.getLastMedicalRecord(token);
 
       if (lastMedicalRecord.status) {
-        return res.status(200).json(
-          format_json(200, true, null, null, lastMedicalRecord.message, lastMedicalRecord.data),
-        );
+        return res
+          .status(200)
+          .json(
+            format_json(
+              200,
+              true,
+              null,
+              null,
+              lastMedicalRecord.message,
+              lastMedicalRecord.data,
+            ),
+          );
       } else {
         return res
           .status(400)
@@ -76,7 +85,9 @@ export class LastMedicalRecordController {
     } catch (error) {
       return res
         .status(500)
-        .json(format_json(500, false, true, null, 'Server Error '+error, error));
+        .json(
+          format_json(500, false, true, null, 'Server Error ' + error, error),
+        );
     }
   }
 }

@@ -79,7 +79,7 @@ export class DoctorDto {
 
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  wilayah_id: BigInt;
+  wilayah_id: number;
 
   poly: {
     id: number;

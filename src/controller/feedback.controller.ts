@@ -29,7 +29,53 @@ export class FeedbackController {
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('admin', 'manager', 'operator')
   @ApiOperation({ summary: 'Get' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '32b174fe-54dc-4cb6-b2b3-1ce90c7bbeee' },
+            user_id: { type: 'string', example: '60a23769-2e28-416f-a028-22af012bfb57' },
+            content: { type: 'string', example: 'Pangil saya ilham brosis' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: '60a23769-2e28-416f-a028-22af012bfb57' },
+                fullname: { type: 'string', example: 'Admin' },
+                phone_number: { type: 'string', example: '1234567894' },
+                profil_image: { type: 'string', example: 'https://api.dicebear.com/8.x/notionists/svg?seed=Admin' },
+                no_identity: { type: 'string', example: null },
+                birth_date: { type: 'string', example: null },
+                birth_place: { type: 'string', example: null },
+                address: { type: 'string', example: null },
+                gender: { type: 'string', example: null },
+                work_in: { type: 'string', example: null },
+                blood_type: { type: 'string', example: null },
+                marital_status: { type: 'string', example: null },
+                nationality: { type: 'string', example: null },
+                religion: { type: 'string', example: null },
+                user_id: { type: 'string', example: '31ab3d21-f7ff-48b7-8953-a48c8298e819' },
+                city_id: { type: 'string', example: null },
+                neighborhood_no: { type: 'string', example: null },
+                citizen_no: { type: 'string', example: null },
+                area_code: { type: 'string', example: null },
+                responsibleForCosts: { type: 'string', example: null }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
   async find(@Res() res: Response, @Req() req: Request) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -102,7 +148,53 @@ export class FeedbackController {
   @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
   @ApiOperation({ summary: 'Create' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '32b174fe-54dc-4cb6-b2b3-1ce90c7bbeee' },
+            user_id: { type: 'string', example: '60a23769-2e28-416f-a028-22af012bfb57' },
+            content: { type: 'string', example: 'Pangil saya ilham brosis' },
+            user: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: '60a23769-2e28-416f-a028-22af012bfb57' },
+                fullname: { type: 'string', example: 'Admin' },
+                phone_number: { type: 'string', example: '1234567894' },
+                profil_image: { type: 'string', example: 'https://api.dicebear.com/8.x/notionists/svg?seed=Admin' },
+                no_identity: { type: 'string', example: null },
+                birth_date: { type: 'string', example: null },
+                birth_place: { type: 'string', example: null },
+                address: { type: 'string', example: null },
+                gender: { type: 'string', example: null },
+                work_in: { type: 'string', example: null },
+                blood_type: { type: 'string', example: null },
+                marital_status: { type: 'string', example: null },
+                nationality: { type: 'string', example: null },
+                religion: { type: 'string', example: null },
+                user_id: { type: 'string', example: '31ab3d21-f7ff-48b7-8953-a48c8298e819' },
+                city_id: { type: 'string', example: null },
+                neighborhood_no: { type: 'string', example: null },
+                citizen_no: { type: 'string', example: null },
+                area_code: { type: 'string', example: null },
+                responsibleForCosts: { type: 'string', example: null }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
   async create(
     @Body() feedbackDto: FeedbackDTO,
     @Res() res: Response,

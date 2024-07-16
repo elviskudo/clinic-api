@@ -19,9 +19,17 @@ import { BankService } from 'src/service/bank/bank.service';
 import { CustomValidationPipe } from 'src/custom-validation.pipe';
 import { RolesGuard } from 'src/middleware/role.guard';
 import { Roles } from 'src/middleware/role.decorator';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Bank')
+@ApiSecurity('bearer')
+@ApiBearerAuth()
 @Controller('api/banks')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 export class BankController {
@@ -32,22 +40,59 @@ export class BankController {
   @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
   @ApiOperation({ summary: 'Create' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 201,
+    description: 'Bank created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        bank_name: { type: 'string' },
+        account_number: { type: 'string' },
+        account_name: { type: 'string' },
+        service_charge: { type: 'number' },
+        handling_fee: { type: 'number' },
+        bank_category: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            category_name: { type: 'string' },
+            description: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   async create(@Body() bankDto: BankDto, @Res() res: Response) {
     try {
       const createdBank = await this.bankService.createBank(bankDto);
-      return res
-        .status(201)
-        .json(
-          format_json(
-            201,
-            true,
-            null,
-            null,
-            'Bank created successfully',
-            createdBank,
-          ),
-        );
+      if (createdBank.status === true) {
+        return res
+          .status(201)
+          .json(
+            format_json(
+              200,
+              false,
+              null,
+              null,
+              'Bank Created Success',
+              createdBank.data,
+            ),
+          );
+      } else {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              createdBank.errors,
+              null,
+              createdBank.message,
+              null,
+            ),
+          );
+      }
     } catch (error) {
       return res
         .status(400)
@@ -69,7 +114,29 @@ export class BankController {
   @UsePipes(CustomValidationPipe)
   @Roles('admin', 'manager', 'operator')
   @ApiOperation({ summary: 'Update' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bank updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        bank_name: { type: 'string' },
+        account_number: { type: 'string' },
+        account_name: { type: 'string' },
+        service_charge: { type: 'number' },
+        handling_fee: { type: 'number' },
+        bank_category: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            category_name: { type: 'string' },
+            description: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   async update(
     @Param('id') id: string,
     @Body() updateBankDto: UpdateBankDto,
@@ -77,25 +144,33 @@ export class BankController {
   ) {
     try {
       const updatedBank = await this.bankService.updateBank(id, updateBankDto);
-      if (!updatedBank) {
+      if (updatedBank.status === true) {
         return res
-          .status(404)
+          .status(201)
           .json(
-            format_json(404, false, 'Not Found', null, 'Bank not found', null),
+            format_json(
+              200,
+              false,
+              null,
+              null,
+              'Bank update Success',
+              updatedBank.data,
+            ),
+          );
+      } else {
+        return res
+          .status(400)
+          .json(
+            format_json(
+              400,
+              false,
+              updatedBank.errors,
+              null,
+              updatedBank.message,
+              null,
+            ),
           );
       }
-      return res
-        .status(200)
-        .json(
-          format_json(
-            200,
-            true,
-            null,
-            null,
-            'Bank updated successfully',
-            updatedBank,
-          ),
-        );
     } catch (error) {
       return res
         .status(400)
@@ -116,7 +191,29 @@ export class BankController {
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Get' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bank retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        bank_name: { type: 'string' },
+        account_number: { type: 'string' },
+        account_name: { type: 'string' },
+        service_charge: { type: 'number' },
+        handling_fee: { type: 'number' },
+        bank_category: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            category_name: { type: 'string' },
+            description: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   async findAll(@Res() res: Response) {
     try {
       const banks = await this.bankService.findAll();
@@ -152,7 +249,29 @@ export class BankController {
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Detail' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bank retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        bank_name: { type: 'string' },
+        account_number: { type: 'string' },
+        account_name: { type: 'string' },
+        service_charge: { type: 'number' },
+        handling_fee: { type: 'number' },
+        bank_category: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            category_name: { type: 'string' },
+            description: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     try {
       const bank = await this.bankService.findOne(id);
@@ -195,7 +314,16 @@ export class BankController {
   @Roles('admin', 'manager', 'operator')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @ApiOperation({ summary: 'Delete' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Bank deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        data: { type: 'null' },
+      },
+    },
+  })
   async remove(@Param('id') id: string, @Res() res: Response) {
     try {
       const deletedBank = await this.bankService.removeBank(id);

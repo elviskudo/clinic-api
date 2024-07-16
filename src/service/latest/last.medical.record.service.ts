@@ -9,52 +9,47 @@ import { ZodError, z } from 'zod';
 
 @Injectable()
 export class LastMedicalRecordService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async getLastMedicalRecord(token: string) {
     try {
-
       const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
       if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
         var userId = extracttoken.userId;
       }
 
-
       const find = await this.prisma.record.findMany({
         include: {
-          user : true,
+          user: true,
           poly: {
             include: {
-              clinic: true
-            }
+              clinic: true,
+            },
           },
           doctor: {
             include: {
-              poly : {
+              poly: {
                 include: {
-                  clinic: true
-                }
+                  clinic: true,
+                },
               },
               city: true,
-            }
+            },
           },
           clinic: {
             include: {
-              city: true
-            }
+              city: true,
+            },
           },
-        }
-      })
+        },
+      });
 
       return {
         status: true,
         message: 'Success',
         data: find,
       };
-
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -81,7 +76,7 @@ export class LastMedicalRecordService {
     createLastMedicalRecordDto: LastMedicalRecordDto,
   ) {
     const schema = z.object({
-      consultation_date_time: z.date(),
+      consultation_date_time: z.string().min(1),
       way_to_come: z.string().min(1),
       vistting_time: z.string().min(1),
       transportation: z.string().min(1),
@@ -105,7 +100,6 @@ export class LastMedicalRecordService {
         var userId = extracttoken.userId;
       }
 
-
       const save = await this.prisma.record.create({
         data: {
           consultation_date_time: validatedData.consultation_date_time,
@@ -120,58 +114,57 @@ export class LastMedicalRecordService {
           complaint: validatedData.complaint,
           history_of_illness: validatedData.history_of_illness,
           solution: validatedData.solution,
-          user : {
-            connect : {
-              id: userId
-            }
+          user: {
+            connect: {
+              id: userId,
+            },
           },
           doctor: {
             connect: {
-              id: validatedData.doctor_id
-            }
+              id: validatedData.doctor_id,
+            },
           },
           poly: {
             connect: {
-              id: validatedData.poly_id
-            }
+              id: validatedData.poly_id,
+            },
           },
           clinic: {
             connect: {
-              id: validatedData.clinic_id
-            }
+              id: validatedData.clinic_id,
+            },
           },
         },
         include: {
-          user : true,
+          user: true,
           poly: {
             include: {
-              clinic: true
-            }
+              clinic: true,
+            },
           },
           doctor: {
             include: {
-              poly : {
+              poly: {
                 include: {
-                  clinic: true
-                }
+                  clinic: true,
+                },
               },
               city: true,
-            }
+            },
           },
           clinic: {
             include: {
-              city: true
-            }
+              city: true,
+            },
           },
-        }
-      })
-      
+        },
+      });
+
       return {
         status: true,
         message: 'Success',
         data: save,
       };
-
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({

@@ -36,6 +36,7 @@ import { FeedbackModule } from './modules/feedback.module';
 import { RoleModule } from './modules/role.module';
 import { ScheduleModule } from './modules/schedule.module';
 import { SymptomModule } from './modules/symptom.module';
+import { ProfileModule } from './modules/profileconfig.module';
 
 
 @Module({
@@ -69,6 +70,7 @@ import { SymptomModule } from './modules/symptom.module';
     RoleModule,
     ScheduleModule,
     SymptomModule,
+    ProfileModule,
     JwtModule.register({
       global: true,
       secret: process.env.JWT_SECRET,

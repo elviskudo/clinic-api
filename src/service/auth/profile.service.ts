@@ -50,6 +50,11 @@ export class ProfileService {
               };
           }
 
+          const serializedResult = {
+            ...getprofile,
+            city_id: Number(getprofile.city_id),
+          };
+
         return {
             status: true,
             message: 'Berhasil',
@@ -58,7 +63,7 @@ export class ProfileService {
               email: checkuser.email,
               is_verified: checkuser.verifed === 1,
               role: checkuser.role,
-              profile: getprofile,
+              profile: serializedResult,
               token: null,
             },
         };
@@ -152,6 +157,11 @@ export class ProfileService {
           role: true
         }
       });
+
+      const serializedResult = {
+        ...getprofile,
+        city_id: Number(getprofile.city_id),
+      };
   
       return {
         status: true,
@@ -161,7 +171,7 @@ export class ProfileService {
           email: checkuser.email,
           is_verified: checkuser.verifed === 1,
           role: checkuser.role,
-          profile: updateprofile,
+          profile: serializedResult,
           token: null,
         },
       };
@@ -199,13 +209,8 @@ export class ProfileService {
   
 
   async update_avatar(token: string,profil_image: string,){
-    const RegisterSchema = z.object({
-      profil_image: z.string().min(1),
-    });
 
     try {
-      const validatedData = RegisterSchema.parse(profil_image);
-
       const extracttoken = jwt.verify(token, process.env.JWT_SECRET);
 
       if (

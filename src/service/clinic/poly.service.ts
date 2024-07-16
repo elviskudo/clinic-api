@@ -8,9 +8,7 @@ import { ZodError, z } from 'zod';
 
 @Injectable()
 export class PolyService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async createPoly(polyDto) {
     const schema = z.object({
@@ -22,7 +20,7 @@ export class PolyService {
     try {
       const validatedData = schema.parse(polyDto);
       const create = await this.prisma.poly.create({
-        data  : {
+        data: {
           name: validatedData.name,
           description: validatedData.description,
           clinic: {
@@ -31,17 +29,32 @@ export class PolyService {
             },
           },
         },
-        include : {
+        include: {
           clinic: {
             include: {
-              city: true
-            }
-          }
-        }
-      })
+              city: true,
+            },
+          },
+        },
+      });
 
-      return create;
+      const serializedResult = {
+        ...create,
+        clinic: {
+          ...create.clinic,
+          city_id: Number(create.clinic.city_id),
+          city: {
+            ...create.clinic.city,
+            id: Number(create.clinic.city.id),
+          },
+        },
+      };
 
+      return {
+        status: true,
+        message: 'Success',
+        data: serializedResult,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -76,8 +89,8 @@ export class PolyService {
     try {
       const validatedData = schema.parse(updatePolyDto);
       const update = await this.prisma.poly.update({
-        where: {id : id},
-        data  : {
+        where: { id: id },
+        data: {
           name: validatedData.name,
           description: validatedData.description,
           clinic: {
@@ -86,17 +99,32 @@ export class PolyService {
             },
           },
         },
-        include : {
+        include: {
           clinic: {
             include: {
-              city: true
-            }
-          }
-        }
-      })
+              city: true,
+            },
+          },
+        },
+      });
 
-      return update;
+      const serializedResult = {
+        ...update,
+        clinic: {
+          ...update.clinic,
+          city_id: Number(update.clinic.city_id),
+          city: {
+            ...update.clinic.city,
+            id: Number(update.clinic.city.id),
+          },
+        },
+      };
 
+      return {
+        status: true,
+        message: 'Success',
+        data: serializedResult,
+      };
     } catch (e: any) {
       if (e instanceof ZodError) {
         const errorMessages = e.errors.map((error) => ({
@@ -122,28 +150,56 @@ export class PolyService {
   }
 
   async findOne(id: string) {
-    return await this.prisma.poly.findUnique({
-      where: {id : id},
-      include : {
+    const get = await this.prisma.poly.findUnique({
+      where: { id: id },
+      include: {
         clinic: {
           include: {
-            city: true
-          }
-        }
-      }
+            city: true,
+          },
+        },
+      },
     });
+
+    const serializedResult = {
+      ...get,
+      clinic: {
+        ...get.clinic,
+        city_id: Number(get.clinic.city_id),
+        city: {
+          ...get.clinic.city,
+          id: Number(get.clinic.city.id),
+        },
+      },
+    };
+
+    return serializedResult
   }
 
   async findAll() {
-    return await this.prisma.poly.findMany({
-      include : {
+    const getall =  await this.prisma.poly.findMany({
+      include: {
         clinic: {
           include: {
-            city: true
-          }
-        }
-      }
+            city: true,
+          },
+        },
+      },
     });
+
+    const result = getall.map((poly) => ({
+      ...poly,
+      clinic: {
+        ...poly.clinic,
+        city_id: Number(poly.clinic.city_id),
+        city: {
+          ...poly.clinic.city,
+          id: Number(poly.clinic.city.id),
+        },
+      },
+    }));
+
+    return result
   }
 
   async removePoly(id: string) {

@@ -171,7 +171,7 @@ CREATE TABLE `Drug` (
 CREATE TABLE `Fee` (
     `id` VARCHAR(191) NOT NULL,
     `activities` VARCHAR(191) NOT NULL,
-    `cost` VARCHAR(191) NOT NULL,
+    `cost` INTEGER NOT NULL,
     `clinic_id` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)

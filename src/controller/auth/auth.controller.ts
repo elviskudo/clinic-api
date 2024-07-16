@@ -52,7 +52,37 @@ export class AuthController {
   @Post('auth/register')
   @UsePipes(CustomValidationPipe)
   @ApiOperation({ summary: 'Register' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+            email: { type: 'string', example: 'taztaz@gmail.com' },
+            is_verified: { type: 'boolean', example: true },
+            role: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                name: { type: 'string', example: 'admin' },
+                description: { type: 'string', example: null }
+              }
+            },
+            token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
   async register(
     @Body() authDTO: AuthDTO,
     @UploadedFile() file: Express.Multer.File,
@@ -84,6 +114,37 @@ export class AuthController {
   @UsePipes(CustomValidationPipe)
   @ApiOperation({ summary: 'Verifikasi akun' })
   @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+            email: { type: 'string', example: 'taztaz@gmail.com' },
+            is_verified: { type: 'boolean', example: true },
+            role: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                name: { type: 'string', example: 'admin' },
+                description: { type: 'string', example: null }
+              }
+            },
+            token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
   async verifikasiEmail(
     @Body() verifikasiDTO: VerifikasiDTO,
     @Req() req: Request,
@@ -158,7 +219,78 @@ export class AuthController {
   @Get('auth/personal-data')
   @UseGuards(AuthGuard('jwt'))
   @ApiOperation({ summary: 'Get personal data' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Berhasil',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            status: { type: 'number', example: 200 },
+            success: { type: 'boolean', example: true },
+            errors: { type: 'string', example: null },
+            meta: { type: 'object', example: null },
+            message: { type: 'string', example: 'Berhasil' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+                email: { type: 'string', example: 'taztaz@gmail.com' },
+                is_verified: { type: 'boolean', example: true },
+                role: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                    name: { type: 'string', example: 'admin' },
+                    description: { type: 'string', example: null }
+                  }
+                },
+                profile: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', example: '9ee5144b-54aa-4941-8ba6-f46c11a1e35d' },
+                    fullname: { type: 'string', example: 'Admin' },
+                    phone_number: { type: 'string', example: '1234567894' },
+                    profile_image: { type: 'string', example: 'https://api.dicebear.com/8.x/notionists/svg?seed=Admin' },
+                    no_identity: { type: 'bigint', example: null },
+                    birth_date: { type: 'date', example: null },
+                    birth_place: { type: 'string', example: null },
+                    address: { type: 'string', example: null },
+                    gender: { type: 'string', example: null },
+                    work_in: { type: 'string', example: null },
+                    blood_type: { type: 'string', example: null },
+                    marital_status: { type: 'string', example: null },
+                    nationality: { type: 'string', example: null },
+                    religion: { type: 'string', example: null },
+                    user_id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+                    city_id: { type: 'bigint', example: null },
+                    neighborhood_no: { type: 'string', example: null },
+                    citizen_no: { type: 'string', example: null },
+                    area_code: { type: 'string', example: null },
+                    responsibleForCosts: { type: 'string', example: null },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+                        email: { type: 'string', example: 'taztaz@gmail.com' },
+                        password: { type: 'string', example: '$2b$10$LVX3DrZTCX0g4B46F21qGull3Lxs.OL1vIE6cAHGGqPmbGl7EigpG' },
+                        role_id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                        verifed: { type: 'number', example: 1 },
+                        created_at: { type: 'string', example: '2024-07-11T05:54:23.483Z' },
+                        updated_at: { type: 'string', example: '2024-07-11T05:54:23.483Z' }
+                      }
+                    }
+                  }
+                },
+                token: { type: 'string', example: null }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
   async getpersonaldata(@Req() req: Request, @Res() res: Response) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -235,7 +367,78 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @UsePipes(CustomValidationPipe)
   @ApiOperation({ summary: 'Update personal data' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Berhasil',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: {
+            status: { type: 'number', example: 200 },
+            success: { type: 'boolean', example: true },
+            errors: { type: 'string', example: null },
+            meta: { type: 'object', example: null },
+            message: { type: 'string', example: 'Berhasil' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+                email: { type: 'string', example: 'taztaz@gmail.com' },
+                is_verified: { type: 'boolean', example: true },
+                role: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                    name: { type: 'string', example: 'admin' },
+                    description: { type: 'string', example: null }
+                  }
+                },
+                profile: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', example: '9ee5144b-54aa-4941-8ba6-f46c11a1e35d' },
+                    fullname: { type: 'string', example: 'Admin' },
+                    phone_number: { type: 'string', example: '1234567894' },
+                    profile_image: { type: 'string', example: 'https://api.dicebear.com/8.x/notionists/svg?seed=Admin' },
+                    no_identity: { type: 'bigint', example: null },
+                    birth_date: { type: 'date', example: null },
+                    birth_place: { type: 'string', example: null },
+                    address: { type: 'string', example: null },
+                    gender: { type: 'string', example: null },
+                    work_in: { type: 'string', example: null },
+                    blood_type: { type: 'string', example: null },
+                    marital_status: { type: 'string', example: null },
+                    nationality: { type: 'string', example: null },
+                    religion: { type: 'string', example: null },
+                    user_id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+                    city_id: { type: 'bigint', example: null },
+                    neighborhood_no: { type: 'string', example: null },
+                    citizen_no: { type: 'string', example: null },
+                    area_code: { type: 'string', example: null },
+                    responsibleForCosts: { type: 'string', example: null },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+                        email: { type: 'string', example: 'taztaz@gmail.com' },
+                        password: { type: 'string', example: '$2b$10$LVX3DrZTCX0g4B46F21qGull3Lxs.OL1vIE6cAHGGqPmbGl7EigpG' },
+                        role_id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                        verifed: { type: 'number', example: 1 },
+                        created_at: { type: 'string', example: '2024-07-11T05:54:23.483Z' },
+                        updated_at: { type: 'string', example: '2024-07-11T05:54:23.483Z' }
+                      }
+                    }
+                  }
+                },
+                token: { type: 'string', example: null }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
   async updatepersonaldata(
     @Body() ProfileDTO: ProfileDto,
     @Req() req: Request,
@@ -338,7 +541,37 @@ export class AuthController {
 
   @Post('auth/signin')
   @ApiOperation({ summary: 'Sign in' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+            email: { type: 'string', example: 'taztaz@gmail.com' },
+            is_verified: { type: 'boolean', example: true },
+            role: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                name: { type: 'string', example: 'admin' },
+                description: { type: 'string', example: null }
+              }
+            },
+            token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
   async signin(@Body() authDTO: AuthDTO, @Res() res: Response) {
     try {
       const user = await this.AuthenticationService.signin(authDTO);
@@ -349,7 +582,7 @@ export class AuthController {
       } else {
         return res
           .status(400)
-          .json(format_json(400, false, true, null, user.message, null));
+          .json(format_json(400, false, true, user.errors, user.message, null));
       }
     } catch (error: any) {
       return res
@@ -362,7 +595,13 @@ export class AuthController {
 
   @Post('auth/signout')
   @ApiOperation({ summary: 'Sign out' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+    }
+  })
   async signout(@Req() req: Request, @Res() res: Response) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -416,7 +655,7 @@ export class AuthController {
       } else {
         return res
           .status(400)
-          .json(format_json(400, false, true, null, user.message, null));
+          .json(format_json(400, false, true, user.errors, user.message, null));
       }
     } catch (error: any) {
       return res
@@ -432,6 +671,37 @@ export class AuthController {
   @UsePipes(CustomValidationPipe)
   @ApiOperation({ summary: 'Resend' })
   @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+            email: { type: 'string', example: 'taztaz@gmail.com' },
+            is_verified: { type: 'boolean', example: true },
+            role: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                name: { type: 'string', example: 'admin' },
+                description: { type: 'string', example: null }
+              }
+            },
+            token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
   async resendOTP(@Req() req: Request, @Res() res: Response) {
     try {
       const authorizationHeader = req.headers['authorization'];
@@ -492,9 +762,38 @@ export class AuthController {
   @UsePipes(CustomValidationPipe)
   @UseInterceptors(FileInterceptor('profil_image', { storage }))
   @ApiOperation({ summary: 'Update avatar' })
-  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+            email: { type: 'string', example: 'taztaz@gmail.com' },
+            is_verified: { type: 'boolean', example: true },
+            role: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                name: { type: 'string', example: 'admin' },
+                description: { type: 'string', example: null }
+              }
+            },
+            token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
   async update_avatar(
-    @Body() update_avatar : Updateavatar,
     @Req() req: Request,
     @UploadedFile() profil_image: Express.Multer.File,
     @Res() res: Response,
@@ -598,6 +897,37 @@ export class AuthController {
   @Post('users/change-password')
   @UsePipes(CustomValidationPipe)
   @UseGuards(AuthGuard('jwt'))
+  @ApiResponse({
+    status: 200,
+    description: 'Success',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'number', example: 200 },
+        success: { type: 'boolean', example: true },
+        errors: { type: 'object', example: null },
+        meta: { type: 'object', example: null },
+        message: { type: 'string', example: 'Success' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', example: '1f4b0c0e-f297-45a7-8854-fccd7fddc5c4' },
+            email: { type: 'string', example: 'taztaz@gmail.com' },
+            is_verified: { type: 'boolean', example: true },
+            role: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', example: 'd789b7fd-b790-449b-b0cd-201294468ce2' },
+                name: { type: 'string', example: 'admin' },
+                description: { type: 'string', example: null }
+              }
+            },
+            token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
+          }
+        }
+      }
+    }
+  })
   async change_password(
     @Body() ChangePassDTO: ChangePassDTO,
     @Req() req: Request,
@@ -654,7 +984,7 @@ export class AuthController {
               400,
               false,
               null,
-              null,
+              (await change_password).errors,
               (await change_password).message,
               null,
             ),

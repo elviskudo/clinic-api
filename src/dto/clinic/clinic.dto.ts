@@ -37,5 +37,5 @@ export class ClinicDto {
 
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  city_id: BigInt;
+  city_id: number;
 }

@@ -14,7 +14,7 @@ export class SummaryDto {
 
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  scheduled_date_time: Date;
+  scheduled_date_time: String;
 
   @IsString()
   @IsNotEmpty({ message: 'should not be empty' })
@@ -39,10 +39,6 @@ export class SummaryDto {
 
   @IsOptional()
   @ApiProperty()
-  status?: boolean;
-
-  @IsOptional()
-  @ApiProperty()
   ai_status?: boolean;
 
   @IsOptional()
@@ -56,6 +52,4 @@ export class SummaryDto {
   @IsOptional()
   @ApiProperty()
   ai_token: string;
-
-  drug: { drug_id: string; qty: number }[];
 }

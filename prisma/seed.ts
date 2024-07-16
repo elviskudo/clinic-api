@@ -12,31 +12,31 @@ async function main() {
 
   const adminrole = await prisma.role.create({
     data: {
-      name: 'Admin',
+      name: 'admin',
     },
   });
 
   const manajerrole = await prisma.role.create({
     data: {
-      name: 'Manajer',
+      name: 'manajer',
     },
   });
 
   const doctorrole = await prisma.role.create({
     data: {
-      name: 'Doctor',
+      name: 'doctor',
     },
   });
 
   const operatorrole = await prisma.role.create({
     data: {
-      name: 'Operator',
+      name: 'operator',
     },
   });
 
   const patientrole = await prisma.role.create({
     data: {
-      name: 'Patient',
+      name: 'patient',
     },
   });
 

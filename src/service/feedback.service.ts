@@ -58,11 +58,24 @@ export class FeedbackService {
       if (typeof extracttoken !== 'string' && 'userId' in extracttoken) {
         var userId = extracttoken.userId;
       }
+
+      const profile = await this.prisma.profile.findUnique({
+        where: { user_id: userId },
+      });
+
+      if (!profile) {
+        return {
+          status: false,
+          message: 'Profile tidak ditemukan',
+          data: null,
+        };
+      }
+
       const create = await this.prisma.feedback.create({
         data  : {
           user: {
             connect : {
-              id : userId
+              id : profile.id
             }
           },
           content: validatedData.content,

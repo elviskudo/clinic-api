@@ -11,8 +11,8 @@ export class FeeService {
   async createFee(feeDto: FeeDto) {
     const schema = z.object({
       activities: z.string().min(1),
-      cost: z.string().min(1),
-      clinic_id: z.string().min(1),
+      cost: z.number().int().positive(),
+      clinic_id: z.string().uuid(),
     });
 
     try {
@@ -53,8 +53,8 @@ export class FeeService {
   async updateFee(id: string, updateFeeDto: UpdateFeeDto) {
     const schema = z.object({
       activities: z.string().min(1),
-      cost: z.string().min(1),
-      clinic_id: z.string().min(1),
+      cost: z.number().int().positive(),
+      clinic_id: z.string().uuid(),
     });
 
     try {
@@ -95,28 +95,20 @@ export class FeeService {
 
   async findOne(id: string) {
     return await this.prisma.fee.findUnique({
-      where: {
-        id: id,
-      },
-      include: {
-        clinic: true,
-      },
+      where: { id },
+      include: { clinic: true },
     });
   }
 
   async findAll() {
     return await this.prisma.fee.findMany({
-      include: {
-        clinic: true,
-      },
+      include: { clinic: true },
     });
   }
 
   async removefee(id: string) {
     return this.prisma.fee.delete({
-      where: {
-        id: id,
-      },
+      where: { id },
     });
   }
 }

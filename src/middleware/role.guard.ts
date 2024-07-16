@@ -30,37 +30,36 @@ export class RolesGuard implements CanActivate {
       this.throwFormattedException(response, 400, 'Token not found', 'UnauthorizedException');
       return false;
     }
-
+  
     try {
       const decodedToken = this.jwtService.verify(token);
       const user = await this.findUserById(decodedToken.userId);
-
+  
       if (!user || !user.role_id) {
         this.throwFormattedException(response, 403, 'Access denied', 'ForbiddenException');
         return false;
       }
-
+  
       const userRoles = await Promise.all(roles.map(roleName => this.findRole(roleName)));
-      const userRoleIds = userRoles.map(role => role.id);
-
-      const hasRole = userRoleIds.includes(user.role_id);
-      if (!hasRole) {
+      const userRoleIds = userRoles.filter(role => role !== null).map(role => role.id);
+  
+      if (!userRoleIds.includes(user.role_id)) {
         this.throwFormattedException(response, 403, 'Access denied', 'ForbiddenException');
         return false;
       }
-      return hasRole;
-    } catch (error) {
-      this.throwFormattedException(response, 400, 'Invalid token', 'UnauthorizedException');
+      return true;
+    } catch (error: any) {
+      this.throwFormattedException(response, 400, 'Invalid token to get role', error.message);
       return false;
     }
   }
 
   async findUserById(userId: string) {
-    return this.prisma.user.findUnique({ where : { id: userId } });
+    return await this.prisma.user.findUnique({ where : { id: userId } });
   }
 
   async findRole(role: string){
-    return this.prisma.role.findFirst({ where : { name: role } });
+    return await this.prisma.role.findFirst({ where : { name: role } });
   }
 
   private throwFormattedException(response: Response, status: number, message: string, exceptionType: string) {
@@ -70,7 +69,7 @@ export class RolesGuard implements CanActivate {
       message,
       null,
       message,
-      null,
+      exceptionType,
     );
     response.status(status).json(formattedResponse);
   }

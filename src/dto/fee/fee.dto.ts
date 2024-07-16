@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsInt, IsNotEmpty, IsPositive, IsString, Min } from 'class-validator';
 
 export class FeeDto {
-  @IsInt()
+  @IsString()
   @IsNotEmpty({ message: 'should not be empty' })
   @ApiProperty()
-  clinic_id: number;
+  clinic_id: string;
 
   @IsString()
   @IsNotEmpty({ message: 'should not be empty' })
@@ -13,8 +13,8 @@ export class FeeDto {
   activities: string;
 
   @IsInt()
-  @Min(0)
-  @IsNotEmpty({ message: 'should not be empty' })
-  @ApiProperty()
+  @IsPositive()
+  @IsNotEmpty({ message: 'Cost should not be empty' })
+  @ApiProperty({ type: 'number' })
   cost: number;
 }
